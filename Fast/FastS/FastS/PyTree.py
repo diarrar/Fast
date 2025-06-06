@@ -131,7 +131,7 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
                 tic=Time.time()
 
                 if nudging is not None: Nud._computeNudging(nudging, zones, nstep)
- 
+
                 fasts._computePT(zones, metrics, nitrun, nstep_deb, nstep_fin, layer_mode, nit_c, hook1)
                 tps_cp +=Time.time()-tic
                 #print('t_compute = ', tps_cp, layer_mode, nstep )
