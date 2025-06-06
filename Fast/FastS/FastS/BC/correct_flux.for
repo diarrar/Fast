@@ -75,10 +75,14 @@ C     Var loc
 
         idir   = param_int( pt_bc + BC_IDIR)
         nbdata = param_int( pt_bc + BC_NBDATA)
-        size_data = param_int( pt_bc + BC_NBDATA + 1)/param_int(NEQ)
         !!size_data = param_int( pt_bc + BC_NBDATA + !1)/(param_int(NEQ)*2)  ! tentative pour envoie pente
-        iptdata = 0
-        if (nbdata.ne.0) iptdata = param_int( pt_bcs + 1 + ndf + nb_bc)
+        iptdata   = 0
+        size_data = 0
+        if (nbdata.ne.0.and.(lapply.eq.2.or.lapply.eq.3)) then
+           iptdata   = param_int( pt_bcs + 1 + ndf + nb_bc) + 3  ! on skip les 3 ratio
+           !size_data = param_int( pt_bc + BC_NBDATA + 1)/param_int(NEQ)
+           size_data = (param_int(pt_bc+BC_NBDATA + 2)-3)/param_int(NEQ) ! la size des tableau est cumulative: Size(tab1)= OK, size(tab2)=  sz(tab1)+sz(tab2)
+        endif
 
         !calcul intersection sous domaine et fenetre CL
         call indice_cl_sdm(idir,npass,lskip,param_int( pt_bc+BC_TYPE),

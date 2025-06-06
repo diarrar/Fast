@@ -10,7 +10,7 @@ c***********************************************************************
      &        nptpsi, nitcfg, nssiter, nitrun, first_it,
      &        nb_pulse, flagCellN,
      &        param_int, param_real,
-     &        temps,
+     &        temps, forcage,
      &        ijkv_sdm,
      &        ind_dm_zone, ind_dm_socket, ind_dm_omp,
      &        socket_topology, lok , topo_s, timer_omp,
@@ -100,7 +100,7 @@ c
 
       REAL_E psi(nptpsi)
 
-      REAL_E temps, norm_kry, cfl(3), param_real(0:*)
+      REAL_E temps, forcage(*), norm_kry, cfl(3), param_real(0:*)
 c      REAL_E drodmstk(20000,param_int(NEQ)), rostk(20000,param_int(NEQ))
 
 C Var loc

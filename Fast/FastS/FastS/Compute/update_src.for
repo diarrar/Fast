@@ -45,6 +45,7 @@ C Var loc
       INTEGER_E v1,v2,v3,v4,v5,v6,v7
       !REAL_E ratio,coefH,xmut(1),rop(1) !!ajout pour feinter option de vecto 
       REAL_E ratio,coefH,xmut(1), vol_dt,ec,ec_tg
+      REAL_E amor
 
 #include "FastS/formule_param.h"
 #include "FastS/formule_mtr_param.h"
@@ -56,6 +57,12 @@ C Var loc
       v5 = param_int(NDIMDX)*4
       v6 = param_int(NDIMDX)*5
       v7 = param_int(NDIMDX)*6
+
+      !coeff pour annuler la contribution de de la solution en NS si
+      !mode interpolation. Dans ce cas  ro_src = ro_target- ro_ns, comme
+      !dans le mode 1
+      amor =1.
+      if (param_int(SRC).eq.3) amor=0.
 
       IF(param_int(SRC).eq.1) THEN
         If(param_int(NEQ).eq.6) Then
@@ -102,27 +109,37 @@ C Var loc
             ec_tg = ro_src(l+v2)*ro_src(l+v2)+ro_src(l+v3)*ro_src(l+v3)
      &             +ro_src(l+v4)*ro_src(l+v4)
 
+           !!! a modifier pour div=0 (v7 dangereux)
             drodm(l+v1)= drodm( l +v1)+  ro_src( l +v7)*vol_dt
-     &                                 *(ro_src( l +v1)-rop(l+v1) )
+     &                                 *(ro_src( l +v1)-rop(l+v1)*amor )
      &                                 *param_real(NUDGING_EQ1)
+
+c            if(ndom.eq.0.and.ro_src( l+v7).eq.1.and.j.gt.10
+c     &         .and.j.le.17
+c     &         .and.l-lij.le.10.and.l-lij.ge.1) then
+c        write(*,*)'tg', ro_src(l+v2), 'src',ro_src(l+v2)-rop(l+v2)*amor,
+c     &    'ns_x',rop(l+v2),
+c     &   nitcfg,  l
+c             endif
+
             drodm(l+v2)= drodm( l +v2)+  ro_src( l +v7)*vol_dt
-     &                                 *(ro_src( l +v2)-rop(l+v2) )
+     &                                 *(ro_src( l +v2)-rop(l+v2)*amor )
      &                                 *param_real(NUDGING_EQ2)
      &                                 *rop(l+v1)
             drodm(l+v3)= drodm( l +v3)+  ro_src( l +v7)*vol_dt
-     &                                 *(ro_src( l +v3)-rop(l+v3) )
+     &                                 *(ro_src( l +v3)-rop(l+v3)*amor )
      &                                 *param_real(NUDGING_EQ3)
      &                                 *rop(l+v1)
             drodm(l+v4)= drodm( l +v4)+  ro_src( l +v7)*vol_dt
-     &                                 *(ro_src( l +v4)-rop(l+v4) )
+     &                                 *(ro_src( l +v4)-rop(l+v4)*amor )
      &                                 *param_real(NUDGING_EQ4)
      &                                 *rop(l+v1)
             drodm(l+v5)= drodm( l +v5)+  ro_src( l +v7)*vol_dt
-     &                                 *(ec_tg-ec)
+     &                                 *(ec_tg-ec*amor)
      &                                 *param_real(NUDGING_EQ5)
      &                                 *rop(l+v1)
             drodm(l+v6)= drodm( l +v6)+  ro_src( l +v7)*vol_dt
-     &                                 *(ro_src( l +v6)-rop(l+v6) )
+     &                                 *(ro_src( l +v6)-rop(l+v6)*amor )
      &                                 *param_real(NUDGING_EQ6)
      &                                 *rop(l+v1)
 #include "FastC/HPC_LAYER/loop_end.for"
@@ -140,22 +157,22 @@ C Var loc
      &             +ro_src(l+v4)*ro_src(l+v4)
 
             drodm(l+v1)= drodm( l +v1)+  ro_src( l +v6)*vol_dt
-     &                                 *(ro_src( l +v1)-rop(l+v1) )
+     &                                 *(ro_src( l +v1)-rop(l+v1)*amor )
      &                                 *param_real(NUDGING_EQ1)
             drodm(l+v2)= drodm( l +v2)+  ro_src( l +v6)*vol_dt
-     &                                 *(ro_src( l +v2)-rop(l+v2) )
+     &                                 *(ro_src( l +v2)-rop(l+v2)*amor )
      &                                 *param_real(NUDGING_EQ2)
      &                                 *rop(l+v1)
             drodm(l+v3)= drodm( l +v3)+  ro_src( l +v6)*vol_dt
-     &                                 *(ro_src( l +v3)-rop(l+v3) )
+     &                                 *(ro_src( l +v3)-rop(l+v3)*amor )
      &                                 *param_real(NUDGING_EQ3)
      &                                 *rop(l+v1)
             drodm(l+v4)= drodm( l +v4)+  ro_src( l +v6)*vol_dt
-     &                                 *(ro_src( l +v4)-rop(l+v4) )
+     &                                 *(ro_src( l +v4)-rop(l+v4)*amor )
      &                                 *param_real(NUDGING_EQ4)
      &                                 *rop(l+v1)
             drodm(l+v5)= drodm( l +v5)+  ro_src( l +v6)*vol_dt
-     &                                 *(ec_tg-ec)
+     &                                 *(ec_tg-ec*amor)
      &                                 *param_real(NUDGING_EQ5)
      &                                 *rop(l+v1)
 #include "FastC/HPC_LAYER/loop_end.for"

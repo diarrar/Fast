@@ -791,11 +791,6 @@ void K_FASTC::setInterpTransfersIntra(
               {
                #include "FastC/Com/flux_conservatif_6eq.cpp"
               }
-             /*
-             if(nvars_loc==5)
-              {
-               #include "FastC/Com/slope_conservatif_5eq.cpp"
-              }*/
             }
           E_Int ideb = 0;
           E_Int ifin = 0;
@@ -1224,14 +1219,20 @@ if (has_data_to_send)
 
             //dimensionnement tableau real pour envoi (interp + flux)
             E_Int sz_real=nbRcvPts_loc;
-            E_Int scale =4;                          //rapport nombre de face fin/grossier
-            if(param_int[ NoD ][NIJK+4]==0){scale=2;} // 2D
             for (E_Int nflu=0; nflu < nbFluCons; nflu++)
               { E_Int   pos = param_int_tc[shift_rac + nrac*17];
-                E_Int* fluD = param_int_tc + pos +4*nflu;
-                    sz_real += fluD[1]/scale;
+                E_Int* fluD = param_int_tc + pos +7*nflu;
+                E_Int idir    = fluD[0];
+                E_Int sizefluD= fluD[1];
+                E_Int ratio_i = fluD[4];
+                E_Int ratio_j = fluD[5];
+                E_Int ratio_k = fluD[6];
+                E_Int scale; //rapport nombre de face fin/grossier
+                if      (idir <=2) { scale = ratio_j*ratio_k;}
+                else if (idir <=4) { scale = ratio_i*ratio_k;}
+                else               { scale = ratio_i*ratio_j;}
+                sz_real += sizefluD/scale;
               }
-            
             
 	    //pck_data.push_back(&send_buffer.push_inplace_array(nvars_loc * nbRcvPts_loc * sizeof(E_Float) ));    
 	    pck_data.push_back(&send_buffer.push_inplace_array(nvars_loc * sz_real * sizeof(E_Float) ));    
@@ -1243,7 +1244,7 @@ if (has_data_to_send)
             if(nbFluCons !=0)
              { E_Int   pos = param_int_tc[shift_rac + nrac*17];
                E_Int* fluD = param_int_tc + pos;
-	       send_buffer << CMP::vector_view<E_Int>(fluD, 4*nbFluCons);
+	       send_buffer << CMP::vector_view<E_Int>(fluD, 7*nbFluCons);
              }
             //printf("size rac %d %d %d %d \n", nbRcvPts_loc*nvars_loc, count_rac, irac, pass_inst);
 
@@ -1469,13 +1470,11 @@ if (has_data_to_send)
                         {
                           #include "FastC/Com/flux_conservatif_5eq_D.cpp"
                         }
-                        //else if(nvars_loc==6)
-                        // {
-                        //  #include "FastC/Com/flux_conservatif_6eq.cpp"
-                        // }
+                        else if(nvars_loc==6)
+                         {
+                          #include "FastC/Com/flux_conservatif_6eq_D.cpp"
+                         }
                        }
-/*
-*/
 
                      E_Int ideb = 0;
                      E_Int ifin = 0;
@@ -1710,17 +1709,17 @@ void K_FASTC::getTransfersInter( E_Int& nbcom, E_Float**& ipt_ro, E_Int**& param
             E_Int decal = param_int[ NoR ] [ NDIMDX ];
             if (NoR < 0) decal=0;
 
+            E_Int shift_fluR = 0;
+            for (E_Int nbflu = 0; nbflu < nbFluCons; nbflu++)
+             {
+             // stokage dans flux grossier pour nearmatch conservatif valable pour 5 et 6 Eq
+              #include "FastC/Com/flux_conservatif_5eq_Recep.cpp"
+             }
+
             //printf("Nozone Verif= %d nvar: %d , nflux: %d\n", NoR,nvars_loc, nbFluCons  );
             //fflush(stdout);
             if ( nvars_loc == 5)
             {
-             // stokage dans flux grossier pour nearmatch conservatif
-             E_Int shift_fluR = 0;
-             for (E_Int nbflu = 0; nbflu < nbFluCons; nbflu++)
-             {
-              #include "FastC/Com/flux_conservatif_5eq_Recep.cpp"
-             }
-              
               //#pragma omp for nowait
               #pragma omp for
               for (E_Int irecv = 0; irecv <  nbRcvPts; ++irecv) 

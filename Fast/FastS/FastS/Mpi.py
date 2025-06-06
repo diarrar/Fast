@@ -1110,7 +1110,7 @@ def _UpdateUnsteadyJoinParam(t, tc, tc_skel, graph, omega, timelevelInfos, split
 
         #on reordone les bases par alphabet  au cas ou tc_inst foireux
         for tmp in [tc, tc_skel]:
-            Internal._sortByName(tmp,recursive=False)
+            Internal._copySort(t, tmp , recursive=False)
             bases  = Internal.getBases(tmp)
             cgns   = Internal.getNodeFromName1(tmp,'CGNSLibraryVersion')
             tmp[2] = [cgns]+bases

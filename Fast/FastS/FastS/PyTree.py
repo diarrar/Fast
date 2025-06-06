@@ -21,6 +21,7 @@ try:
     import time as Time
     import Connector.Mpi as Xmpi
     import RigidMotion.PyTree as R
+    import FastS.Nudging as Nud
 
     #import timeit
     #import KCore.Dist as Dist
@@ -39,7 +40,7 @@ except: pass
 # compute in place
 # graph is a dummy argument to be compatible with mpi version
 #==============================================================================
-def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, layer="c", NIT=1, ucData=None, vtune=None):
+def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, layer="c", NIT=1, ucData=None, vtune=None, nudging=None):
     """Compute a given number of iterations."""
     gradP      =False
     TBLE       =False
@@ -129,6 +130,8 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
                 nit_c     = 1
                 tic=Time.time()
 
+                if nudging is not None: Nud._computeNudging(nudging, zones, nstep)
+ 
                 fasts._computePT(zones, metrics, nitrun, nstep_deb, nstep_fin, layer_mode, nit_c, hook1)
                 tps_cp +=Time.time()-tic
                 #print('t_compute = ', tps_cp, layer_mode, nstep )
@@ -2579,6 +2582,7 @@ def setIBCData_zero(t, surf, dim=None):
     # Matrice de masquage (arbre d'assemblage)
     nbodies = len(bodies)
     nbases = len(bases)
+
     BM = numpy.ones((nbases,nbodies), dtype=Internal.E_NpyInt)
     if dim is None:
         sol= Internal.getNodeFromName1(zones[0],'FlowSolution#Centers')

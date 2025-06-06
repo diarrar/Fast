@@ -214,6 +214,8 @@
 
 /* stockage pointer volume pour ale deformable*/
 #define PT_VOL       135
+/* stockage pointer volume pour ale deformable*/
+#define  CHANNEL_BODYFORCE  136
 
 
 /*BC types*/
@@ -310,6 +312,8 @@
 
 /*amortissememnt dissipation ausm: senseur like avec wig=cte entre 0 et 1) */
 #define WIG_AMP       72
+#define FORCAGE_DEBN  73
+#define FORCAGE_DEB0  74
 
 /*CONSTANTS*/
 #define SA_CKARM    0.41 

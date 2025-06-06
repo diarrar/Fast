@@ -198,6 +198,7 @@ if(nitcfg==1){param_real[0][TEMPS] = 0.0;}
   if(iptflux != -1) Nfamily  = param_int[0][iptflux];
 
   E_Float masse[3];
+  E_Float forcage[2*Nthread_max*nidom];
   E_Float debit[Nthread_max*2*6];
   E_Float flux[Nthread_max*neqFlu*Nfamily];
   E_Float ro_corr; E_Float varMasse;
@@ -440,22 +441,25 @@ E_Int lrhs=0; E_Int lcorner=0;
 
   //reinitialisation verrou pour calcul rhs et lhs
 #include  "FastS/Compute/verrou_lhs_init.cpp"
+  //calcul terme forcage canal plan
+#include  "FastS/Compute/src_channel.cpp"
 
  }//fin zone omp
 
 /*
       //Modif LECLAIRE
       if(nitcfg == nssiter) 
-       { 
-         for (E_Int nd = 0; nd < nidom; nd++)
-           { 
-             param_int[nd][IFLOW]=2;
+       { for (E_Int nd = 0; nd < nidom; nd++)
+           { param_int[nd][IFLOW]=2;
              param_real[nd][PSIROE]=0.5;
            }
        }
       //Modif LECLAIRE
 */     
-  
+ 
+// calcul et affichage debit channel flow si necessaire
+#include  "FastS/Compute/debit_channel.cpp"
+
 
 #ifdef _OPENMP  
      time_trans = time_trans + omp_get_wtime()-trans_deb;

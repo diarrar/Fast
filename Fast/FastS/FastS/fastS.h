@@ -75,6 +75,7 @@ namespace K_FASTS
   PyObject* computePT_velocity_ale(  PyObject* self, PyObject* args);
   PyObject* copy_velocity_ale(       PyObject* self, PyObject* args);
   PyObject* computePT_my(            PyObject* self, PyObject* args);
+  PyObject* _computePT_laplacien(    PyObject* self, PyObject* args);
   PyObject* compute_effort(          PyObject* self, PyObject* args);
   PyObject* _movegrid(               PyObject* self, PyObject* args);
   //PyObject* _motionlaw(              PyObject* self, PyObject* args);
@@ -284,7 +285,14 @@ void recup3para_c(E_Float**& iptro, E_Int*& param_int,
 		  E_Int**& param_intt, 
 		  E_Float*& iptstk, E_Int& nstep, E_Int& taille_tabs, E_Int& nidom);
 
-
+void laplace( 
+  E_Int**& param_int  , E_Float**& param_real , E_Int& nidom        ,  E_Int& nssiter      ,  E_Int& threadmax_sdm, 
+  E_Int* ipt_ijkv_sdm , E_Int* ipt_ind_dm_omp , E_Int* ipt_topology , E_Int* ipt_ind_CL    ,
+  E_Int** ipt_ind_dm  , E_Int* iptdtloc       , 
+  E_Float**  iptx     , E_Float**  ipty       , E_Float**    iptz   ,
+  E_Float**& iptro    , E_Float**& iptro_p1   , 
+  E_Float*  iptphi1   , E_Float*   iptphi2    , E_Float*   iptb     ,
+  E_Float**  ipti     , E_Float**  iptj       , E_Float** iptk      , E_Float** iptvol, E_Float** iptsrc, E_Float* residu);
 
 }
 #endif
