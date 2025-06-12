@@ -22,8 +22,11 @@
             //  Revoir cet adressage si scater et  socket>1 et ou nidom >1
             E_Int* ipt_lok_thread   = ipt_lok   + ntask*mx_synchro*Nbre_thread_actif;
 
-            E_Int* ipt_ind_dm_loc         = ipt_ind_dm[nd]  + (nitcfg-1)*6*param_int[nd][ MXSSDOM_LU ] + 6*nd_subzone;      //ind_dm(6, < ssdom_lu,nssiter)
-            E_Float* ipt_cfl_thread       = ipt_cfl         + (ithread_loc-1)*3+ ndo*3*Nbre_thread_actif;
+            E_Int* ipt_ind_dm_loc   = ipt_ind_dm[nd]  + (nitcfg-1)*6*param_int[nd][ MXSSDOM_LU ] + 6*nd_subzone;      //ind_dm(6, < ssdom_lu,nssiter)
+            E_Float* ipt_cfl_thread = ipt_cfl         + (ithread_loc-1)*3+ ndo*3*Nbre_thread_actif;
+
+            //forcage channel flow
+            E_Float* ipt_forcage    = forcage         + (ithread_loc-1)*2+ ndo*2*Nbre_thread_actif;
 
             E_Float* iptCellN_loc; E_Int flagCellN;
             if (iptCellN[nd] == NULL) { flagCellN = 0; iptCellN_loc = iptro[nd];}
@@ -37,7 +40,7 @@
             navier_stokes_struct_( ndo,    Nbre_thread_actif_loc, ithread_loc, ithread, omp_mode, layer_mode, Nbre_socket, socket, mx_synchro , 
                                    lssiter_verif, lexit_lu             ,nptpsi      , nitcfg , nssiter , nitrun    , first_it   , nb_pulse  , flagCellN,
                                   param_int[nd] , param_real[nd] ,
-                                  temps               ,
+                                  temps               , ipt_forcage,
                                   ipt_ijkv_sdm_thread , ipt_ind_dm_loc, ipt_ind_dm_socket, ipt_inddm_omp, ipt_topology_socket, ipt_lok_thread, ipt_topo_omp, timer_omp_th,
                                   iptkrylov[nd]       , ipt_norm_kry[ithread-1],
                                   ipt_cfl_thread      ,

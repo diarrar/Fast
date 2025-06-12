@@ -171,9 +171,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
                coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3)+coe(l,4))*0.5
 
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -254,9 +254,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
               !Id+Partie convective precedente+Partie visqueuse
               coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3)+coe(l,4))*0.5
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -312,9 +312,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
 
 #include     "FastC/HPC_LAYER/loop_end.for"
 
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -378,9 +378,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
                !Id+Partie convective precedente+Partie visqueuse
                coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3))*0.5
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -493,9 +493,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
                !Id+Partie convective precedente+Partie visqueuse
                coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3)+coe(l,4))*0.5
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -581,9 +581,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
               !Id+Partie convective precedente+Partie visqueuse
               coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3)+coe(l,4))*0.5
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -647,9 +647,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
                coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3)+coe(l,4))*0.5
 #include     "FastC/HPC_LAYER/loop_end.for"
 
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 
@@ -719,9 +719,9 @@ CDIR$ VECTOR NONTEMPORAL (coe)
                !Id+Partie convective precedente+Partie visqueuse
                coe(l,5)=xid + coe(l,1)*(coe(l,2)+coe(l,3))*0.5
 #include   "FastC/HPC_LAYER/loop_end.for"
-          if(param_int(SRC).eq.2) then
+          if(param_int(SRC).ge.2) then
 #include     "FastC/HPC_LAYER/loop_begin.for"
-               coe(l,5)=coe(l,5) + ro_src(l,6)*param_real(NUDGING_EQ2)
+               coe(l,5)=coe(l,5) + ro_src(l,7)*param_real(NUDGING_EQ2)
 #include     "FastC/HPC_LAYER/loop_end.for"
           endif
 

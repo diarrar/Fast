@@ -339,16 +339,12 @@ def _createPrimVars(t, omp_mode, rmConsVars=True, Adjoint=False, gradP=False, is
                 for v in vars_p:
                     fields2compact.append('centers:'+v+level)
                 vars.append(fields2compact)
-            if source == 1:          #terme source volumique
+            if source >= 1:          #terme source volumique
                 fields2compact =[]
                 for v in vars_c:
                     fields2compact.append('centers:'+v+'_src')
-                vars.append(fields2compact)
-            if source == 2:          #terme source volumique
-                fields2compact=[]
-                for v in vars_c:
-                    fields2compact.append('centers:'+v+'_src')
-                fields2compact.append('centers:cellN_src')
+                #pour nudging dirac ou interpolation
+                if source > 1 : fields2compact.append('centers:cellN_src')
                 vars.append(fields2compact)
             if motion == 'deformation' or motion == 'rigid_ext':     #ale deformable
                 fields2compact=[]
@@ -848,7 +844,7 @@ def _createVarsFast(base, zone, omp_mode, rmConsVars=True, adjoint=False, gradP=
         if C.isNamePresent(zone, 'centers:MomentumZ_src') != 1:   C._initVars(zone, 'centers:MomentumZ_src', 0.)
         if C.isNamePresent(zone, 'centers:EnergyStagnationDensity_src') != 1: C._initVars(zone, 'centers:EnergyStagnationDensity_src', 0.)
         if (sa and C.isNamePresent(zone, 'centers:TurbulentSANuTildeDensity_src') != 1): C._initVars(zone, 'centers:TurbulentSANuTildeDensity_src', 0.)
-        if source == 2 and C.isNamePresent(zone, 'centers:cellN_src') != 1:  C._initVars(zone, 'centers:cellN_src', 0.)
+        if source >= 2 and C.isNamePresent(zone, 'centers:cellN_src') != 1:  C._initVars(zone, 'centers:cellN_src', 0.)
 
     # init termes zone eponge
     sponge = 0
@@ -983,6 +979,7 @@ def _buildOwnData(t, Padding):
         'extract_res':0,
         'IBC':3,
         'source':0,
+        'channelBodyForce':0,
         'Cups':4,
         'senseurType':0,
         'ratiom':1,
@@ -1324,6 +1321,7 @@ def _buildOwnData(t, Padding):
             extract_res     = 0
             ibc             = numpy.zeros( 7, dtype=Internal.E_NpyInt)
             source          = 0
+            channelBodyForce= 0
             cups            = [1.,1.,1.]
             ratiom          = 10000.
             meshtype        = 1  #structured
@@ -1513,6 +1511,9 @@ def _buildOwnData(t, Padding):
                 if a is not None: ibc = a[1]
                 a = Internal.getNodeFromName1(d, 'source')
                 if a is not None: source = Internal.getValue(a)
+                a = Internal.getNodeFromName1(d, 'channelBodyForce')
+                if a is not None: channelBodyForce = Internal.getValue(a)
+
                 a = Internal.getNodeFromName1(d, 'Cups')
                 cupsLen = 3
                 if a is not None:
@@ -1751,7 +1752,7 @@ def _buildOwnData(t, Padding):
             # creation noeud parametre integer
 
 
-            number_of_defines_param_int = 136                           # Number Param INT
+            number_of_defines_param_int = 137                           # Number Param INT
             size_int                   = number_of_defines_param_int +1 # number of defines + 1
 
 
@@ -1943,12 +1944,16 @@ def _buildOwnData(t, Padding):
             datap[VSHARE.NONZ] = ndom
             i += 1
 
+            #perodic channel flow (pressure gradient)
+            datap[136] = channelBodyForce
+
+
             Internal.createUniqueChild(o, 'Parameter_int', 'DataArray_t', datap)
 
             #=====================================================================
             # creation noeud parametre real
             #=====================================================================
-            number_of_defines_param_real = 72                                    # Number Param REAL
+            number_of_defines_param_real = 74                                    # Number Param REAL
             size_real                    = number_of_defines_param_real+1
             datap                        = numpy.zeros(size_real, numpy.float64)
             if dtc < 0:
@@ -2028,6 +2033,9 @@ def _buildOwnData(t, Padding):
 
             ##amortissememnt dissip AUSM: genre wiggle=cte=ausmdamping
             datap[72] = ausmdamping
+            ##forcage Debit pour channel flow
+            datap[73] = 0.
+            datap[74] = 0.
 
             # LBM related stuff
             datap[VSHARE.LBM_c0]        = lbm_c0
@@ -2814,19 +2822,6 @@ def _BCcompact(t):
                 nb_cell = max([wrange[0][1] - wrange[0][0],1])* max([wrange[1][1] - wrange[1][0],1])*max([wrange[2][1] - wrange[2][0],1])
                 rand = numpy.zeros((1,nb_cell), dtype=numpy.float64)
                 Internal.createUniqueChild(bc, 'random_vec', 'DataArray_t', rand)
-
-            if 'BCFluxOctree' in btype:
-                Prop = Internal.getNodeFromName(bc,'.Solver#Property')
-                if Prop is None:
-                    Internal.createUniqueChild(bc,'.Solver#Property','UserDefinedData_t')
-                    Prop = Internal.getNodeFromName(bc,'.Solver#Property')
-
-                    ptrange = Internal.getNodesFromType1(bc, 'IndexRange_t')
-                    rg  = ptrange[0][1]
-                    sz  = max(1, rg[0,1]-rg[0,0]+1) * max(1, rg[1,1]-rg[1,0]+1) * max(1, rg[2,1]-rg[2,0]+1)
-                    tab =  numpy.ones(sz*neq, numpy.float64)
-                    #tab =  numpy.ones(sz*neq*2, numpy.float64) #stockage 1 pente aussi
-                    Internal.createUniqueChild(Prop, 'FluxFaces', 'DataArray_t', value=tab)
 
             if btype == 'BCWallViscousIsothermal':
                 Prop = Internal.getNodeFromName(bc,'.Solver#Property')

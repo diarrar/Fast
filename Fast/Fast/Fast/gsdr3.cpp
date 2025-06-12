@@ -179,6 +179,7 @@ E_Int rank =0;
   E_Int neqFlu       = 26;
   if (iptflux != -1) Nfamily  = param_int[0][iptflux];
 
+  E_Float forcage[2*Nthread_max*nidom];
 #ifdef _Conservatif
   E_Float masse[3];
   E_Float debit[Nthread_max*2*6];

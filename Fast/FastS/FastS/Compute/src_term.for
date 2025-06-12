@@ -50,7 +50,7 @@ C Var loc
      & rho,vu,vv,vw,q,eps,ampli,xmod,pi,xrelax,sro,su,sv,sw,sroe,seuil,
      & xc,yc,rayon,rayon1,rayon2,rayon3,rayon4,nuwall,p,roe,dphi,aphi,
      & gam1,constA,uext,dpdx,dy,dym,up,utp2,nu,nut,vara,varb,rho0,p0,
-     & rhou0,rhov0,rhow0,roe0
+     & rhou0,rhov0,rhow0,roe0, forcage(2)
 
 #include "FastS/param_solver.h"
 
@@ -73,6 +73,11 @@ C Var loc
       IF (param_int(SRC).ge.1) THEN
         call update_src(ndom, nitcfg, param_int, param_real, ind_rhs,
      &                  drodm , rop, coe, vol, ro_src)
+      ENDIF
+      IF(param_int(CHANNEL_BODYFORCE).eq.1) THEN
+        call src_channel(ndom,ithread, param_int, param_real,
+     &                  ind_sdm, nitcfg, nitrun, 0,
+     &                  forcage, drodm ,rop, tk, coe)
       ENDIF
 
       ! Si dtloc + ALE 

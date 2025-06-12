@@ -226,7 +226,7 @@ extern "C"
                               E_Int& ithread        , E_Int& ithread_io       , E_Int& omp_mode, E_Int& layer_mode, E_Int& Nbre_socket, E_Int& socket     , E_Int& mx_synchro   , 
                               E_Int& lssiter_verif  , E_Int& lexit_lu, E_Int& nptpsi           , E_Int& nitcfg  , E_Int& nssiter   , E_Int& nitrun    , E_Int& first_it   , E_Int& nb_pulse   , E_Int&   flagCellN  ,
                               E_Int* ipt_param_int  , E_Float* ipt_param_real ,
-                              E_Float& temps        ,
+                              E_Float& temps        , E_Float* forcage,
                               E_Int* ipt_ijkv_sdm       ,
                               E_Int* ipt_ind_dm_int     , E_Int* ipt_ind_dm_sock, E_Int* ipt_ind_dm_omp  , E_Int* ipt_topo_thread  , E_Int* ipt_lok,  E_Int* ipt_topo_omp, E_Float* timer_omp,
                               E_Float* krylov           , E_Float& norm_kry,
@@ -247,6 +247,27 @@ extern "C"
                               E_Float* ipti             , E_Float* iptj        , E_Float* iptk           , 
                               E_Float* iptventi         , E_Float* iptventj    , E_Float* iptventk       ,  
                               E_Float* iptcoe           , E_Float* iptssor     , E_Int& size_ssor);
+
+  void divlaplace_(           E_Int& ndo          , E_Int& it_jacobi, E_Int& ithread , E_Int*  param_int , E_Float* param_real, E_Int* ind_loop,          
+                              E_Float* ipti       , E_Float* iptj   , E_Float* iptk  , E_Float* iptvol,
+                              E_Float* iptrop     ,E_Float* iptphi1    , E_Float* iptphi2, E_Float* rhs   , E_Float* src, E_Float* residu);
+
+  void matvec_(         E_Int& ndo      , E_Int& ithread  , E_Int*  param_int , E_Int* ind_loop,          
+                        E_Float* ipti   , E_Float* iptj   , E_Float* iptk  , E_Float* iptvol,
+                        E_Float* iptphi1, E_Float* iptphi2);
+
+  void cl_vec_(   E_Int& ndo  , E_Int& ithread , E_Int*  param_int , E_Int* ind_loop, E_Float* iptphi1  );
+
+  void rhs_(           E_Int& ndo     , E_Int& ithread , E_Int*  param_int , E_Int* ind_loop,          
+                       E_Float* ipti  , E_Float* iptj   , E_Float* iptk    , E_Float* iptvol,
+                       E_Float* iptrop, E_Float* rhs   , E_Float* src);
+
+
+  void vec_add_(  E_Int& ndo    , E_Int& ithread , E_Int*  param_int , E_Int* ind_loop, 
+                  E_Float*  vec1, E_Float* vec2  , E_Float& alpha    , E_Float& beta);
+
+  void dot_product_( E_Int& ndo    , E_Int& ithread , E_Int*  param_int , E_Int* ind_loop,
+                     E_Float*  vec1, E_Float* vec2  , E_Float*  res);
 
   void dp_dw_vect_(E_Int* ipt_param_int, E_Float* ipt_param_real, E_Int* ind_loop,
 		   E_Float* iptrop, E_Float* iptvectin, E_Float* iptvectout, E_Int& size);
@@ -555,4 +576,7 @@ extern "C"
  void corr_bilan_ibm_(E_Int& nd, E_Int& idir, E_Int& neq_mtr, E_Int& ithread, E_Int& Nthread_max, E_Int& nitcfg, E_Int* param_int , E_Float* param_real,
                       E_Int& size_fen, E_Int* facelist,  E_Float* drodm, E_Float* iptijk, E_Float* iptcoe , E_Float* flux   );
 
+ void src_channel_(E_Int& ndom, E_Int& ithread, E_Int* param_int, E_Float* param_real, 
+                      E_Int* ind_loop, E_Int& nitcfg, E_Int& nitrun, E_Int& mode,
+                      E_Float* forcage, E_Float* drodm, E_Float* rop, E_Float* tk, E_Float* coe);
   }

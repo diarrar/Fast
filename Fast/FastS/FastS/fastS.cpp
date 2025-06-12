@@ -59,6 +59,7 @@ static PyMethodDef Pyfasts [] =
   {"_applyBC"            , K_FASTS::_applyBC            ,  METH_VARARGS},
   {"itt"                 , K_FASTS::itt                 ,  METH_VARARGS},
   {"compute_dpJ_dpW"     , K_FASTS::compute_dpJ_dpW     ,  METH_VARARGS},
+  {"_computePT_laplacien", K_FASTS::_computePT_laplacien ,  METH_VARARGS},
  
  // {"compute_RhsIterAdjoint", K_FASTS::compute_RhsIterAdjoint,  METH_VARARGS},
  // {"rhsIter_LorURelax_Adj" , K_FASTS::LorURelaxationAdjoint ,  METH_VARARGS},
