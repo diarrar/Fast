@@ -3,7 +3,8 @@
 
          E_Int pt_bcs   = param_int[ NoR ][PT_BC];
          E_Int nb_bc    = param_int[ NoR ][pt_bcs];
-         E_Int idir     = param_int[ NoR ][pt_bcs + 1 + nobcR +BC_IDIR];
+         E_Int pt_bc    = param_int[ NoR ][pt_bcs + 1 + nobcR];
+         E_Int idir     = param_int[ NoR ][pt_bc +BC_IDIR];
          E_Int adrFlu   = param_int[ NoR ][pt_bcs + 1 + nobcR + nb_bc] +3;
          E_Float* fluxR = param_real[ NoR ] + adrFlu;
          E_Float* ratio = fluxR-3;
@@ -16,7 +17,7 @@
 
          E_Int shift   = nvars_loc * (nbRcvPts + shift_fluR);
          shift_fluR   += sizefluR;
-         //printf("No raccord Recep %d , nbRcvPts: %d ,  sizefluR: %d, shift_fluR: %d \n", nobcR, nbRcvPts, sizefluR, shift_fluR);
+         //printf("NoR: %d , No raccord Recep %d , sizefluD: %d ,  sizefluR: %d, shift_fluR: %d idir: %d ratio: %d %d %d \n", NoR, nobcR, sizefluD, sizefluR, shift_fluR, idir, ratio_i,ratio_j,ratio_k);
          #pragma omp for nowait
          for (E_Int l = 0; l < sizefluR*nvars_loc; l++)
            {

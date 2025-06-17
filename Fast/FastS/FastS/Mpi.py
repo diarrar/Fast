@@ -892,7 +892,11 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
             # print(h0, -1, nbpts_linelets)
             _createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
 
-        X.miseAPlatDonorTree__(zones, tc, graph=graph,list_graph=list_graph, nbpts_linelets=nbpts_linelets)
+        X.miseAPlatDonorTree__(t, tc, graph=graph,list_graph=list_graph, nbpts_linelets=nbpts_linelets)
+
+        npass_transfer = dtloc[12]
+        npass_transfer = Cmpi.allreduce(npass_transfer)
+        if npass_transfer > Cmpi.size: dtloc[12]=2
 
         FastC.HOOK['param_int_tc'] = Internal.getNodeFromName1( tc, 'Parameter_int')[1]
         param_real_tc               = Internal.getNodeFromName1( tc, 'Parameter_real')

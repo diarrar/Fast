@@ -152,6 +152,8 @@ if( kimpli == 1  && param_int[0][LU_MATCH]==1 && param_int_tc != NULL)
 
                     if(param_int[nd][LU_MATCH]==1 || param_int[nd][NB_RELAX]>1) iptdrodm_out = ipt_ssortmp_shift;
 
+                    //printf("lu %d %d %d %d %d %d \n",ipt_shift_lu[0], ipt_shift_lu[1], ipt_shift_lu[2], ipt_shift_lu[3], ipt_shift_lu[4], ipt_shift_lu[5]);
+                    
 		    invlu_(nd                     , nitcfg                  , nitrun                ,
 			   param_int[nd]          , param_real[nd]          ,
 			   ipt_shift_lu           , ipt_ind_dm_thread       , mjrnewton             ,

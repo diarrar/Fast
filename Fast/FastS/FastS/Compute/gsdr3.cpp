@@ -363,7 +363,7 @@ E_Int nitcfg_stk = nitcfg;
 if(lexit_lu ==0 && layer_mode>=1)
 {   
   //remplissage ghost transfert
-  for (E_Int ipass = 0; ipass < 1; ipass++)
+  for (E_Int ipass = 0; ipass < iptdtloc[12]; ipass++)
   {
   #include "FastS/Compute/transfert_multiblock.cpp"
   }

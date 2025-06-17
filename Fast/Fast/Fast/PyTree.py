@@ -214,7 +214,7 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     # Compactage arbre transfert et mise a jour FastC.HOOK
     #
     if tc is not None:
-        X.miseAPlatDonorTree__(zones, tc, graph=graph, list_graph=list_graph)
+        X.miseAPlatDonorTree__( t, tc, graph=graph, list_graph=list_graph)
 
         FastC.HOOK['param_int_tc'] = Internal.getNodeFromName1( tc, 'Parameter_int' )[1]
         param_real_tc = Internal.getNodeFromName1( tc, 'Parameter_real')
