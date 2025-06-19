@@ -1179,7 +1179,7 @@ def _buildOwnData(t, Padding):
     size_omp = MX_OMP_SIZE_INT
 
     nitCyclLBM = 2**(maxlevel-1)
-    dtdim = 12 + nitCyclLBM
+    dtdim = 13 + nitCyclLBM
     #print('ncycl_LBM', nitCyclLBM, maxlevel)
 
     datap = numpy.zeros((dtdim+ size_omp), Internal.E_NpyInt)
@@ -1195,13 +1195,14 @@ def _buildOwnData(t, Padding):
     datap[9] = maxlevel
     datap[10]= LBMCycleIteration # No it du cycle integration temporelle LBM
     datap[11]= dtdim             # shift pour acceder au info OMP
+    datap[12]= 1                 # nbre de pass pour transfert
 
     # level max pour chaque it du cycle LBM
     for it in range(nitCyclLBM):
         for level in range(maxlevel,0,-1):
             it_tg = 2**(level-1)
             if it%it_tg == 0:
-                datap[12+it] = level
+                datap[13+it] = level
                 #print('Nblevel',datap[12+it],'itCycl=',it )
                 break
 
@@ -2656,10 +2657,10 @@ def switchPointersLBM__(zones, dtloc):
         level = param_int[VSHARE.LEVEL]
         maxlevel    = dtloc[ 9]
         it_cycl_lbm = dtloc[10]
-        level_tg = dtloc[12 +it_cycl_lbm]
+        level_tg = dtloc[13 +it_cycl_lbm]
         max_it        = 2**( maxlevel-1)
         level_next_it =  maxlevel;
-        if it_cycl_lbm != max_it -1 : level_next_it = dtloc[12 +it_cycl_lbm +1]
+        if it_cycl_lbm != max_it -1 : level_next_it = dtloc[13 +it_cycl_lbm +1]
 
         #if level==1 or (level >=2 and level <= level_next_it) :
         if level <= level_next_it :
