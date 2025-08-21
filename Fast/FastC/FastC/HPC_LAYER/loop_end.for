@@ -1,7 +1,5 @@
 #ifndef E_SCALAR_COMPUTER
-             enddo
-             enddo
-             enddo
+#include   "FastC/HPC_LAYER/loopGpu_end.for"
 #else
              enddo
              enddo
