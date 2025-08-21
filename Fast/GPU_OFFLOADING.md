@@ -41,6 +41,28 @@ export OMP_OFFLOAD_TARGET=amdgcn-amdhsa
 - **Main computation**: `template_FluxAndBalance_gpu.for`
 - **Boundary conditions**: `bvbs_wall_viscous_GPU_gpu.for`
 
+### Code Generation
+
+After modifying `template_FluxAndBalance_gpu.for`, you must regenerate the flux routines using:
+
+```bash
+cd Fast/FastS/FastS/Compute
+python generate_flu.py <FLUX_TYPE> GPU
+```
+
+Where `<FLUX_TYPE>` can be:
+- `ROE` - Roe flux scheme 
+- `AUSM` - AUSM flux scheme
+- `SENSOR` - Sensor flux scheme
+- `SENSOR_INIT` - Sensor initialization flux scheme
+
+Example to regenerate GPU-enabled ROE flux routines:
+```bash
+python generate_flu.py ROE GPU
+```
+
+This generates GPU-accelerated versions of all flux routines in the corresponding subdirectories (`ROE/3dfull/`, `ROE/3dcart/`, etc.).
+
 ### Implementation Details
 
 #### Target Data Regions
@@ -91,6 +113,52 @@ export OMP_NUM_TEAMS=1024
 # Profile GPU usage (NVIDIA)
 nvprof ./your_fast_application
 ```
+
+## Testing GPU Offloading
+
+### Recommended Test Cases
+
+For verifying GPU functionality, use these Fast test cases:
+
+**Simple 2D Tests:**
+- `lambPT.py` - Lamb vortex (good for initial validation)
+- `cylindrePT.py` - 2D cylinder flow
+
+**3D Tests:**  
+- `flatPlatePT.py` - 3D flat plate boundary layer
+- `PplaneNasaSAMesh136x96_t1.py` - NASA turbulent flow test
+
+### Test Procedure
+
+1. **Generate GPU flux routines**:
+   ```bash
+   cd Fast/FastS/FastS/Compute
+   python generate_flu.py ROE GPU
+   ```
+
+2. **Build with GPU support**:
+   ```bash
+   # For NVIDIA GPUs
+   export OMP_OFFLOAD_TARGET=nvptx-none
+   ./install
+   
+   # For AMD GPUs  
+   export OMP_OFFLOAD_TARGET=amdgcn-amdhsa
+   ./install
+   ```
+
+3. **Run test with GPU enforcement**:
+   ```bash
+   export OMP_TARGET_OFFLOAD=MANDATORY
+   cd Fast/FastS/test
+   python lambPT.py
+   ```
+
+### Verification
+
+- Check OpenMP runtime output: `export LIBOMPTARGET_DEBUG=1`
+- Compare results with CPU-only runs for accuracy
+- Monitor GPU utilization with `nvidia-smi` or `rocm-smi`
 
 ## Compatibility
 

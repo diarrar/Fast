@@ -41,8 +41,10 @@ c***********************************************************************
 
       INTEGER_E ndom, ithread, nptpsi,
      & icache, jcache, kcache,
-     & ijkv_cache(3),ind_loop(6),ind_dm(6),
-     & synchro_send_th(3), synchro_receive_th(3), param_int(0:*)
+     & ibloc, jbloc, kbloc, 
+     & ijkv_bloc(3), ijkv_cache(3),ind_loop(6),ind_dm(6),
+     & synchro_send_sock(3),synchro_send_th(3),
+     & synchro_receive_sock(3), synchro_receive_th(3), param_int(0:*)
 
       REAL_E  xmut( param_int(NDIMDX) )
       REAL_E   rop( param_int(NDIMDX)     * param_int(NEQ)     )
@@ -81,7 +83,7 @@ C Var loc
      & gradW_nx,gradW_ny,gradW_nz, gradT_nx,gradT_ny,gradT_nz,
      & delp,delm,delq,slq,slp,roff,tmin_1,du,dv,dw,dp,dqn,s_1,nx,ny,nz,
      & qn,r,v,w,h,q,r_1,psiroe, xktvol, xmulam, xmutur, xmutot,
-     & c50,c51,c52,c53,c54
+     & c50,c51,c52,c53,c54,sens
 
 #include "FastS/formule_param.h"
 #include "FastS/formule_mtr_param.h"
@@ -135,7 +137,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
       c1     = 0.02*uref         ! modif suite chant metrique et suppression tc dans flux final
       c2     = 0.02/(uref*roref) ! modif suite chant metrique et suppression tc dans flux final
       c3     = -2.
-      opt0   = float(param_int(SENSORTYPE))
+      opt0   = param_int(SENSORTYPE)
 
       !    roff MUSCL
       c6     = 1./6.
@@ -151,11 +153,6 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
       c50   =47.*c50
 
       cvisq = 1./3
-
-      icorr = 0 !correction indice boucle i pour traiter l'interface ind_loop(2)+1 si necessaire
-      jcorr = 0 
-      If(icache.eq.ijkv_cache(1).and.synchro_receive_th(1).eq.0) icorr=1
-      If(jcache.eq.ijkv_cache(2).and.synchro_receive_th(2).eq.0) jcorr=1
 
       v1 = 0
       v2 =   param_int(NDIMDX)
@@ -181,66 +178,82 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
 #include "FastS/Compute/pragma_align.for"
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, ind_dm, &
+!$OMP&                   inddm, indmtr, rop, wig, venti, ventj, ventk, &
+!$OMP&                   ti, tj, tk, vol, xmut) &
+!$OMP&            MAP(tofrom: drodm)
+#endif
+
       DO k = ind_loop(5), ind_loop(6)
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
        DO j = ind_loop(3), ind_loop(4)
-
-#include "FastS/Compute/loopI_begin.for"                  
-            l0= l  - inck                   
+!$OMP SIMD                                                
+        DO i = ind_loop(1), ind_loop(2)                   
+            l  =  inddm(i,j,k)                            
+            lt = indmtr(i,j,k)                            
+            lvo= lt                                       
+            sens=1.                                       
 #include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_k.for"  
-#include    "FastS/Compute/assemble_drodm_plus_vec1.for"  
-          enddo                             
+#include    "FastS/Compute/assemble_drodm_mono.for"            
+                                                          
+            l  =  inddm(i,j,k+1)                          
+            lt = indmtr(i,j,k+1)                          
+            lvo= lt                                       
+            sens=-1.                                      
+#include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_k.for"  
+            l  =  inddm(i,j,k)                            
+#include    "FastS/Compute/assemble_drodm_mono.for"            
+        ENDDO                                             
+!$OMP SIMD
+        DO i = ind_loop(1), ind_loop(2)
 
-#include  "FastS/Compute/loopI_begin.for"
-            l0= l  - incj 
+            l  =  inddm(i,j,k)
+            lt = indmtr(i,j,k)
+            lvo= lt
+            sens=1.
 #include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_j.for"
-#include    "FastS/Compute/assemble_drodm_plus_vec1.for"
-          enddo
+#include    "FastS/Compute/assemble_drodm_mono.for"
 
-#include "FastS/Compute/loopI_begin.for"
-            l0= l  - inci
+            l  =  inddm(i,j+1,k)
+            lt = indmtr(i,j+1,k)
+            lvo= lt
+            sens=-1.
+#include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_j.for"
+            l  =  inddm(i,j,k)
+#include    "FastS/Compute/assemble_drodm_mono.for"
+        ENDDO   
+!$OMP SIMD                                        
+        DO i = ind_loop(1), ind_loop(2)
+            l  =  inddm(i,j,k)
+            lt = indmtr(i,j,k)
+            lvo= lt
+            sens=1.
 #include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_i.for"
-#include    "FastS/Compute/assemble_drodm_plus_vec1.for"
-          enddo
-
-          if(icorr.eq.1) then !flux manquant en I
-             i   = ind_loop(2) + 1
-             l   = inddm(  i, j, k)
-             lt  = indmtr( i, j, k)
+#include    "FastS/Compute/assemble_drodm_mono.for"
+        ENDDO !do i
+!$OMP SIMD
+        DO i = ind_loop(1), ind_loop(2)
+            l  =  inddm(i+1,j,k)
+            lt = indmtr(i+1,j,k)
+            lvo= lt
+            sens=-1.
 #include    "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_i.for"
-              ls = l -inci
-#include    "FastS/Compute/flu_send_scater_vec1.for"
-          endif !
-       ENDDO !do j
+            l  =  inddm(i,j,k)
+#include    "FastS/Compute/assemble_drodm_mono.for"
 
-       !Complement fluj en Jmax
-       If(jcorr.eq.1) then
-
-         j    = ind_loop(4)+1
-
-#include "FastS/Compute/loopI_begin.for"
-
-#include       "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_j.for"
-               ls = l -incj
-#include       "FastS/Compute/flu_send_scater_vec1.for"
-         enddo
-        Endif
-
+        ENDDO !do i
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
+      ENDDO !do j
       ENDDO !do k
-                                                                       
-                                                                       
-      !Complement fluk en Kmax                                         
-      If(kcache.eq.ijkv_cache(3).and.synchro_receive_th(3).eq.0) then  
-                                                                       
-        k    = ind_loop(6)+1               
-        do j = ind_loop(3),ind_loop(4)     
-                                           
-#include "FastS/Compute/loopI_begin.for"                 
-                                           
-#include   "FastS/Compute/ROE/3dcart/fluFaceEuler_o3_3dcart_k.for"  
-            ls = l -inck                   
-#include    "FastS/Compute/flu_send_scater_vec1.for"     
-          enddo                            
-        enddo                              
-      Endif                                
+
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET DATA
+#endif
+
       end
 
