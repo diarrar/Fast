@@ -186,7 +186,17 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
 #include "FastS/Compute/pragma_align.for"
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, ind_dm, &
+!$OMP&                   inddm, indmtr, rop, wig, venti, ventj, ventk, &
+!$OMP&                   ti, tj, tk, vol, xmut) &
+!$OMP&            MAP(tofrom: drodm)
+#endif
+
       DO k = ind_loop(5), ind_loop(6)
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
        DO j = ind_loop(3), ind_loop(4)
 !$OMP SIMD                                                !3D only
         DO i = ind_loop(1), ind_loop(2)                   !3D only
@@ -211,7 +221,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
             l  =  inddm(i,j,k)                            !3D only
 #include    "FastS/Compute/assemble_drodm_mono.for"            !3D only
         ENDDO                                             !3D only
-!$OMP SIMD 
+!$OMP SIMD
         DO i = ind_loop(1), ind_loop(2)
 
             l  =  inddm(i,j,k)
@@ -235,7 +245,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
             l  =  inddm(i,j,k)
 #include    "FastS/Compute/assemble_drodm_mono.for"
         ENDDO   
-!$OMP SIMD                                         
+!$OMP SIMD                                        
         DO i = ind_loop(1), ind_loop(2)
             l  =  inddm(i,j,k)
             lt = indmtr(i,j,k)
@@ -247,7 +257,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscRans_i.for"
 #include    "FastS/Compute/assemble_drodm_mono.for"
         ENDDO !do i
-!$OMP SIMD 
+!$OMP SIMD
         DO i = ind_loop(1), ind_loop(2)
             l  =  inddm(i+1,j,k)
             lt = indmtr(i+1,j,k)
@@ -261,7 +271,15 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/assemble_drodm_mono.for"
 
         ENDDO !do i
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
       ENDDO !do j
       ENDDO !do k
+
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET DATA
+#endif
+
       end
 
