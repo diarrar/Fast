@@ -104,7 +104,10 @@ if f77compiler == 'ifort':
    addFFlags += ['-qopenmp', '-qopenmp-offload=generic']
 elif f77compiler == 'gfortran':
    # Add OpenMP offloading support for gfortran
-   addFFlags += ['-fopenmp', '-foffload=nvptx-none']
+   # Use environment variable for offload target or default to disable for compatibility
+   import os
+   offload_target = os.environ.get('OMP_OFFLOAD_TARGET', 'disable')
+   addFFlags += ['-fopenmp', '-foffload=' + offload_target]
  
 env = Dist.createFortranBuilder(env, dirs=[fastcIncDir, "."], 
    additionalPPArgs=addFPPArgs, additionalFortranArgs=addFFlags)
