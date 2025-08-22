@@ -124,13 +124,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
                lmtr = indmtr( ind_loop(2)+1 , j,  k )  !next rank
 #include       "FastS/BC/BCWallViscous_i.for"               !next rank
              enddo
+          enddo
+          enddo
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
-#endif
-          enddo
-          enddo
-
-#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET DATA
 #endif
 
@@ -156,13 +153,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
                lmtr = indmtr( ind_loop(2)+1 , j,  k )  !next rank
 #include       "FastS/BC/BCWallViscousSA_i.for"             !next rank
              enddo
+          enddo
+          enddo
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
-#endif
-          enddo
-          enddo
-
-#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET DATA
 #endif
 
@@ -175,6 +169,12 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
 
@@ -191,8 +191,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
              enddo
           enddo
           enddo
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
        else
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
 
@@ -209,6 +219,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
              enddo
           enddo
           enddo
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
         endif !param_int(NEQ)
 
 
@@ -219,6 +233,12 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
 
             j    = ind_loop(4)
@@ -239,9 +259,19 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        else
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
 
             j    = ind_loop(4)
@@ -262,6 +292,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        endif !param_int(NEQ)
 
@@ -272,6 +306,12 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
 
             j    = ind_loop(3)
@@ -292,9 +332,19 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        else
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)
 
             j    = ind_loop(3)
@@ -315,6 +365,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
        endif !param_int(NEQ)
 
 
@@ -325,6 +379,12 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           k = ind_loop(6)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -346,8 +406,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        else
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           k = ind_loop(6)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -369,6 +439,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
        endif !param_int(NEQ)
 
 
@@ -379,6 +453,12 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           k = ind_loop(5)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -400,9 +480,19 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        else
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           k = ind_loop(5)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -424,6 +514,10 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
               enddo 
             enddo !j
           enddo !k
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
 
        endif !param_int(NEQ)
 
