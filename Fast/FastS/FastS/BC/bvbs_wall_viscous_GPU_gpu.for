@@ -379,6 +379,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+C        First boundary layer: k = ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
 !$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
@@ -395,6 +396,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 #include        "FastS/BC/BCWallViscous_k.for"
               enddo 
            enddo 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
+
+C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)-1
             do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -412,6 +425,8 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 #endif
 
        else
+
+C        First boundary layer: k = ind_loop(6) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
 !$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
@@ -428,6 +443,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 #include        "FastS/BC/BCWallViscousSA_k.for"
               enddo 
            enddo 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
+
+C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent case)
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5), ind_loop(6)-1
             do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -453,6 +480,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        if(param_int(NEQ).eq.5) then
 
+C        First boundary layer: k = ind_loop(5)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
 !$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
@@ -469,6 +497,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 #include        "FastS/BC/BCWallViscous_k.for"
               enddo 
            enddo 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
+
+C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5)+1, ind_loop(6)
             do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
@@ -487,6 +527,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
        else
 
+C        First boundary layer: k = ind_loop(5) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
 !$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
@@ -503,6 +544,18 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 #include        "FastS/BC/BCWallViscousSA_k.for"
               enddo 
            enddo 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP END TARGET DATA
+#endif
+
+C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6) (turbulent case)
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
+!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&            MAP(tofrom: state)
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
           do k = ind_loop(5)+1, ind_loop(6)
             do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
