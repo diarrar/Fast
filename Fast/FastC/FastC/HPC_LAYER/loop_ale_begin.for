@@ -1,5 +1,5 @@
 #ifndef E_SCALAR_COMPUTER
-#include   "FastS/Compute/loopGpu_begin.for"
+#include   "FastC/HPC_LAYER/loopGpu_begin.for"
             lt =  indmtr(i, j, k)
             lv =  indven(i, j, k)
             lx =  indcg( i, j, k)

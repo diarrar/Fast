@@ -1,7 +1,7 @@
             lt = 1
             lvo= lt
 #ifndef E_SCALAR_COMPUTER
-#include   "FastS/Compute/loopGpu_begin.for"
+#include   "FastC/HPC_LAYER/loopGpu_begin.for"
             lv =  indven(i, j, k)
             lx =  indcg( i, j, k)
 #else
