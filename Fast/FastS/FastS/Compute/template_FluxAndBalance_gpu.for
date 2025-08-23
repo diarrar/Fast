@@ -271,10 +271,10 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/assemble_drodm_mono.for"
 
         ENDDO !do i
+      ENDDO !do j
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
-      ENDDO !do j
       ENDDO !do k
 
 #ifdef _OPENMP_GPU_OFFLOAD
