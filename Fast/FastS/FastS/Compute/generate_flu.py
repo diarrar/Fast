@@ -46,6 +46,7 @@ lines_srcs = srcs.readlines()
 srcs.close()
 srcs= open('../../srcs.py','w')
 c = 0
+c_index = 0
 for l in lines_srcs:
     if 'FastS/Compute/src_term.for' in l: c_index = c
     c += 1
@@ -54,6 +55,7 @@ lines_srcs_beg = lines_srcs[0:c_index]
 lines_srcs_end = lines_srcs[c_index:]
 
 c = 0
+c_index = 0
 for l in lines_select:
     if 'ELSE' in l: c_index = c
     c += 1
