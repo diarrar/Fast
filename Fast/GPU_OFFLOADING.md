@@ -41,13 +41,30 @@ export OMP_OFFLOAD_TARGET=amdgcn-amdhsa
 - **Main computation**: `template_FluxAndBalance_gpu.for`
 - **Boundary conditions**: `bvbs_wall_viscous_GPU_gpu.for`
 
+### Template Architecture
+
+Fast now maintains two master templates for flux computations:
+
+- **`template_FluxAndBalance.for`**: Base template with conditional GPU directives
+  - Contains `#ifdef _OPENMP_GPU_OFFLOAD` blocks for unified codebase
+  - Used when building CPU-only versions
+  
+- **`template_FluxAndBalance_gpu.for`**: GPU master template
+  - Optimized structure for GPU execution
+  - Used when building GPU-enabled versions
+
 ### Code Generation
 
-After modifying `template_FluxAndBalance_gpu.for`, you must regenerate the flux routines using:
+The flux generation process uses the appropriate template based on the command:
 
 ```bash
 cd Fast/FastS/FastS/Compute
-python generate_flu.py <FLUX_TYPE> GPU
+
+# Generate CPU flux routines (uses template_FluxAndBalance.for)
+python generate_flu.py ROE
+
+# Generate GPU flux routines (uses template_FluxAndBalance_gpu.for)  
+python generate_flu.py ROE GPU
 ```
 
 Where `<FLUX_TYPE>` can be:
