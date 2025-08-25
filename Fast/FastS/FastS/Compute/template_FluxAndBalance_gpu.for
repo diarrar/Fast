@@ -187,7 +187,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include "FastS/Compute/pragma_align.for"
 
 #ifdef _OPENMP_GPU_OFFLOAD
-!$OMP TARGET DATA MAP(to: param_int(0:200), param_real(0:100), ind_loop, ind_dm,
+!$OMP TARGET DATA MAP(to: param_int(0:136), param_real(0:74), ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
 !$OMP&                   ti, tj, tk, vol, xmut)
 !$OMP&            MAP(tofrom: drodm)
