@@ -45,14 +45,12 @@ c***********************************************************************
      & ijkv_bloc(3), ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_sock(3),synchro_send_th(3),
      & synchro_receive_sock(3), synchro_receive_th(3)
-#if defined(__FLANG__) || defined(__flang__) || defined(_AMD)
-C     AMD Fortran workaround: disable GPU offload due to parameter array incompatibility
       INTEGER_E param_int(0:*)
       REAL_E param_real(0:*)
-#define DISABLE_GPU_OFFLOAD
-#else
-      INTEGER_E param_int(0:*)
-      REAL_E param_real(0:*)
+
+#ifdef _OPENMP_GPU_OFFLOAD
+C     Declare param arrays as device resident to avoid mapping issues
+!$OMP DECLARE TARGET(param_int, param_real)
 #endif
 
       REAL_E  xmut( param_int(NDIMDX) )
@@ -193,7 +191,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
 #include "FastS/Compute/pragma_align.for"
 
-#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
+#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
 !$OMP&                   ti, tj, tk, vol, xmut)
@@ -201,7 +199,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #endif
 
       DO k = ind_loop(5), ind_loop(6)
-#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
+#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
        DO j = ind_loop(3), ind_loop(4)
@@ -279,12 +277,12 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
         ENDDO !do i
       ENDDO !do j
-#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
+#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
       ENDDO !do k
 
-#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
+#ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET DATA
 #endif
 

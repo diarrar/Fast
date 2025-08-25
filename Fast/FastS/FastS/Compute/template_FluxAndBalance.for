@@ -43,14 +43,12 @@ c***********************************************************************
      & icache, jcache, kcache,
      & ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_th(3), synchro_receive_th(3)
-#if defined(__FLANG__) || defined(__flang__) || defined(_AMD)
-C     AMD Fortran workaround: disable GPU offload due to parameter array incompatibility
       INTEGER_E param_int(0:*)
       REAL_E param_real(0:*)
-#define DISABLE_GPU_OFFLOAD
-#else
-      INTEGER_E param_int(0:*)
-      REAL_E param_real(0:*)
+
+#ifdef _OPENMP_GPU_OFFLOAD
+C     Declare param arrays as device resident to avoid mapping issues
+!$OMP DECLARE TARGET(param_int, param_real)
 #endif
 
       REAL_E  xmut( param_int(NDIMDX) )
