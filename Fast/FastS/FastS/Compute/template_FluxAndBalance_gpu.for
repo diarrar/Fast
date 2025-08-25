@@ -45,10 +45,11 @@ c***********************************************************************
      & ijkv_bloc(3), ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_sock(3),synchro_send_th(3),
      & synchro_receive_sock(3), synchro_receive_th(3)
-#ifdef __AOCC__
-C     AMD Fortran workaround: use fixed-size arrays for GPU compatibility
-     INTEGER_E param_int(0:136)
-      REAL_E param_real(0:74)
+#if defined(__FLANG__) || defined(__flang__) || defined(_AMD)
+C     AMD Fortran workaround: disable GPU offload due to parameter array incompatibility
+      INTEGER_E param_int(0:*)
+      REAL_E param_real(0:*)
+#define DISABLE_GPU_OFFLOAD
 #else
       INTEGER_E param_int(0:*)
       REAL_E param_real(0:*)
@@ -192,7 +193,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
 #include "FastS/Compute/pragma_align.for"
 
-#ifdef _OPENMP_GPU_OFFLOAD
+#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
 !$OMP TARGET DATA MAP(to: ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
 !$OMP&                   ti, tj, tk, vol, xmut)
@@ -200,7 +201,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #endif
 
       DO k = ind_loop(5), ind_loop(6)
-#ifdef _OPENMP_GPU_OFFLOAD
+#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
        DO j = ind_loop(3), ind_loop(4)
@@ -278,12 +279,12 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
         ENDDO !do i
       ENDDO !do j
-#ifdef _OPENMP_GPU_OFFLOAD
+#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
       ENDDO !do k
 
-#ifdef _OPENMP_GPU_OFFLOAD
+#if defined(_OPENMP_GPU_OFFLOAD) && !defined(DISABLE_GPU_OFFLOAD)
 !$OMP END TARGET DATA
 #endif
 

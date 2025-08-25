@@ -80,6 +80,17 @@ python generate_flu.py ROE GPU
 
 This generates GPU-accelerated versions of all flux routines in the corresponding subdirectories (`ROE/3dfull/`, `ROE/3dcart/`, etc.).
 
+### AMD Fortran Compatibility
+
+⚠️ **AMD Fortran (amdflang) Known Issue**: Due to LLVM IR generation issues with parameter arrays in GPU contexts, GPU offloading is automatically disabled when compiling with AMD Fortran compilers. The code will compile and run correctly on CPU using OpenMP threading.
+
+**Automatic Detection**: The build system detects AMD Fortran and disables GPU directives by defining `DISABLE_GPU_OFFLOAD`.
+
+**Workaround**: For AMD GPU systems, consider using:
+1. **Intel Fortran** with `-fiomp -fopenmp-targets=amdgcn-amd-amdhsa`
+2. **GNU Fortran** with OpenMP offloading support
+3. **CPU-only execution** with AMD Fortran (still benefits from OpenMP threading)
+
 ### Implementation Details
 
 #### Target Data Regions

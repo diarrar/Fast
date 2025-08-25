@@ -43,10 +43,11 @@ c***********************************************************************
      & icache, jcache, kcache,
      & ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_th(3), synchro_receive_th(3)
-#ifdef __AOCC__
-C     AMD Fortran workaround: use fixed-size arrays for GPU compatibility  
-      INTEGER_E param_int(0:136)
-      REAL_E param_real(0:74)
+#if defined(__FLANG__) || defined(__flang__) || defined(_AMD)
+C     AMD Fortran workaround: disable GPU offload due to parameter array incompatibility
+      INTEGER_E param_int(0:*)
+      REAL_E param_real(0:*)
+#define DISABLE_GPU_OFFLOAD
 #else
       INTEGER_E param_int(0:*)
       REAL_E param_real(0:*)
