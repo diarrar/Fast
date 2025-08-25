@@ -106,7 +106,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -135,7 +135,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)  
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -171,7 +171,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -199,7 +199,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -235,7 +235,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -268,7 +268,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -308,7 +308,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -341,7 +341,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -382,7 +382,7 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 C        First boundary layer: k = ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -404,7 +404,7 @@ C        First boundary layer: k = ind_loop(6)
 C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -429,7 +429,7 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 C        First boundary layer: k = ind_loop(6) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -451,7 +451,7 @@ C        First boundary layer: k = ind_loop(6) (turbulent case)
 C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -483,7 +483,7 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent c
 C        First boundary layer: k = ind_loop(5)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -505,7 +505,7 @@ C        First boundary layer: k = ind_loop(5)
 C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -530,7 +530,7 @@ C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
 C        First boundary layer: k = ind_loop(5) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
@@ -552,7 +552,7 @@ C        First boundary layer: k = ind_loop(5) (turbulent case)
 C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, &
-!$OMP&                   inddm, indven, indmtr, x, y, z, rop, xmut) &
+!$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif

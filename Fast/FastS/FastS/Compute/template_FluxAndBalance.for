@@ -191,7 +191,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, ind_dm,
-!$OMP&                   inddm, indmtr, rop, wig, venti, ventj, ventk,
+!$OMP&                   rop, wig, venti, ventj, ventk,
 !$OMP&                   ti, tj, tk, vol, xmut)
 !$OMP&            MAP(tofrom: drodm)
 #endif
