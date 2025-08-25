@@ -44,7 +44,15 @@ c***********************************************************************
      & ibloc, jbloc, kbloc, 
      & ijkv_bloc(3), ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_sock(3),synchro_send_th(3),
-     & synchro_receive_sock(3), synchro_receive_th(3), param_int(0:*)
+     & synchro_receive_sock(3), synchro_receive_th(3)
+#ifdef __AOCC__
+C     AMD Fortran workaround: use fixed-size arrays for GPU compatibility
+     INTEGER_E param_int(0:136)
+      REAL_E param_real(0:74)
+#else
+      INTEGER_E param_int(0:*)
+      REAL_E param_real(0:*)
+#endif
 
       REAL_E  xmut( param_int(NDIMDX) )
       REAL_E   rop( param_int(NDIMDX)     * param_int(NEQ)     )
@@ -58,8 +66,6 @@ c***********************************************************************
      &        tj( param_int(NDIMDX_MTR) * param_int(NEQ_IJ) ),
      &        tk( param_int(NDIMDX_MTR) * param_int(NEQ_K ) )
       REAL_E vol( param_int(NDIMDX_MTR) )
-
-      REAL_E param_real(0:*)
 
 C Var loc
       INTEGER_E inc,incmax,l,lt,i,j,k,incmax2,nm,nm2,np,np2,
