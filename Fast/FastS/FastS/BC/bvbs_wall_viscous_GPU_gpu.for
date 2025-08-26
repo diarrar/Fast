@@ -25,8 +25,8 @@ c***********************************************************************
 #include "FastS/param_solver.h"
 
       INTEGER_E idir,lrhs, neq_mtr, ind_loop(6)
-      INTEGER_E param_int(0:*)
-      REAL_E param_real(0:*)
+      INTEGER_E param_int(0:136)
+      REAL_E param_real(0:74)
 
 #ifdef _OPENMP_GPU_OFFLOAD
 C     Declare param arrays as device resident to avoid mapping issues

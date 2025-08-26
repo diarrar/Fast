@@ -45,8 +45,8 @@ c***********************************************************************
      & ijkv_bloc(3), ijkv_cache(3),ind_loop(6),ind_dm(6),
      & synchro_send_sock(3),synchro_send_th(3),
      & synchro_receive_sock(3), synchro_receive_th(3)
-      INTEGER_E param_int(0:*)
-      REAL_E param_real(0:*)
+      INTEGER_E param_int(0:136)
+      REAL_E param_real(0:74)
 
 #ifdef _OPENMP_GPU_OFFLOAD
 C     Declare param arrays as device resident to avoid mapping issues
