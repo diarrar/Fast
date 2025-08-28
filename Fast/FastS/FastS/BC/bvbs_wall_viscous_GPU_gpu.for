@@ -399,9 +399,15 @@ C        First boundary layer: k = ind_loop(6)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
+#ifdef _OPENMP_GPU_OFFLOAD
+                l    = inddm_gpu(  i,      j, k,              param_int ) 
+                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )
+                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )
+#else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )
                 lmtr = indmtr( i,      j, ind_loop(6)+1  )
+#endif
 #include        "FastS/BC/BCWallViscous_k.for"
               enddo 
            enddo 
@@ -421,9 +427,15 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
             do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
+#ifdef _OPENMP_GPU_OFFLOAD
+                l    = inddm_gpu(  i,      j, k,              param_int ) 
+                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )  !next rank
+                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )  !next rank
+#else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )  !next rank
                 lmtr = indmtr( i,      j, ind_loop(6)+1  )  !next rank
+#endif
 #include        "FastS/BC/BCWallViscous_k.for"                   !next rank
               enddo 
             enddo !j
@@ -446,9 +458,15 @@ C        First boundary layer: k = ind_loop(6) (turbulent case)
            do j = ind_loop(3), ind_loop(4)
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
+#ifdef _OPENMP_GPU_OFFLOAD
+                l    = inddm_gpu(  i,      j, k,              param_int ) 
+                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )
+                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )
+#else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )
                 lmtr = indmtr( i,      j, ind_loop(6)+1  )
+#endif
 #include        "FastS/BC/BCWallViscousSA_k.for"
               enddo 
            enddo 
