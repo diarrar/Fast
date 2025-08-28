@@ -209,8 +209,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 !$OMP SIMD                                                !3D only
         DO i = ind_loop(1), ind_loop(2)                   !3D only
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)              !3D only
-            lt = indmtr_gpu(i,j,k,param_int)              !3D only
+            l  = inddm_gpu(i,j,k)              !3D only
+            lt = indmtr_gpu(i,j,k)              !3D only
 #else
             l  =  inddm(i,j,k)                            !3D only
             lt = indmtr(i,j,k)                            !3D only
@@ -224,8 +224,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/assemble_drodm_mono.for"            !3D only
                                                           !3D only
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k+1,param_int)            !3D only
-            lt = indmtr_gpu(i,j,k+1,param_int)            !3D only
+            l  = inddm_gpu(i,j,k+1)            !3D only
+            lt = indmtr_gpu(i,j,k+1)            !3D only
 #else
             l  =  inddm(i,j,k+1)                          !3D only
             lt = indmtr(i,j,k+1)                          !3D only
@@ -237,7 +237,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscLaminar_k.for"          !3D only
 #include    "FastS/Compute/fluViscRans_k.for"             !3D only
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)              !3D only
+            l  = inddm_gpu(i,j,k)              !3D only
 #else
             l  =  inddm(i,j,k)                            !3D only
 #endif
@@ -247,8 +247,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
         DO i = ind_loop(1), ind_loop(2)
 
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)
-            lt = indmtr_gpu(i,j,k,param_int)
+            l  = inddm_gpu(i,j,k)
+            lt = indmtr_gpu(i,j,k)
 #else
             l  =  inddm(i,j,k)
             lt = indmtr(i,j,k)
@@ -262,8 +262,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/assemble_drodm_mono.for"
 
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j+1,k,param_int)
-            lt = indmtr_gpu(i,j+1,k,param_int)
+            l  = inddm_gpu(i,j+1,k)
+            lt = indmtr_gpu(i,j+1,k)
 #else
             l  =  inddm(i,j+1,k)
             lt = indmtr(i,j+1,k)
@@ -275,7 +275,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscLaminar_j.for"
 #include    "FastS/Compute/fluViscRans_j.for"
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)
+            l  = inddm_gpu(i,j,k)
 #else
             l  =  inddm(i,j,k)
 #endif
@@ -284,8 +284,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 !$OMP SIMD                                        
         DO i = ind_loop(1), ind_loop(2)
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)
-            lt = indmtr_gpu(i,j,k,param_int)
+            l  = inddm_gpu(i,j,k)
+            lt = indmtr_gpu(i,j,k)
 #else
             l  =  inddm(i,j,k)
             lt = indmtr(i,j,k)
@@ -301,8 +301,8 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 !$OMP SIMD
         DO i = ind_loop(1), ind_loop(2)
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i+1,j,k,param_int)
-            lt = indmtr_gpu(i+1,j,k,param_int)
+            l  = inddm_gpu(i+1,j,k)
+            lt = indmtr_gpu(i+1,j,k)
 #else
             l  =  inddm(i+1,j,k)
             lt = indmtr(i+1,j,k)
@@ -314,7 +314,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscLaminar_i.for"
 #include    "FastS/Compute/fluViscRans_i.for"
 #ifdef _OPENMP_GPU_OFFLOAD
-            l  = inddm_gpu(i,j,k,param_int)
+            l  = inddm_gpu(i,j,k)
 #else
             l  =  inddm(i,j,k)
 #endif
