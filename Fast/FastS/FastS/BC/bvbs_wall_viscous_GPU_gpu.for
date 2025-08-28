@@ -23,6 +23,9 @@ c***********************************************************************
       implicit none
 
 #include "FastS/param_solver.h"
+#ifdef _OPENMP_GPU_OFFLOAD
+#include "FastS/formule_gpu_functions.h"
+#endif
 
       INTEGER_E idir,lrhs, neq_mtr, ind_loop(6)
       INTEGER_E param_int(0:136)

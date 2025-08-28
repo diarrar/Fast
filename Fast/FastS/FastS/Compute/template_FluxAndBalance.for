@@ -92,6 +92,9 @@ C Var loc
 #include "FastS/formule_param.h"
 #include "FastS/formule_mtr_param.h"
 #include "FastS/formule_vent_param.h"                               !ALE only
+#ifdef _OPENMP_GPU_OFFLOAD
+#include "FastS/formule_gpu_functions.h"
+#endif
 
       !limiteur 'minmod'
       avmin(c,r)=sign(1.,c)*max(0.,min(abs(c),sign(1.,c)*r))

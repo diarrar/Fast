@@ -92,8 +92,11 @@ C Var loc
      & c50,c51,c52,c53,c54,sens
 
 #include "FastS/formule_param.h"
-#include "FastS/formule_mtr_param.h"
+#include "FastS/formule_mtr_param.h" 
 #include "FastS/formule_vent_param.h"                               !ALE only
+#ifdef _OPENMP_GPU_OFFLOAD
+#include "FastS/formule_gpu_functions.h"
+#endif
 
       !limiteur 'minmod'
       avmin(c,r)=sign(1.,c)*max(0.,min(abs(c),sign(1.,c)*r))
@@ -205,8 +208,13 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
        DO j = ind_loop(3), ind_loop(4)
 !$OMP SIMD                                                !3D only
         DO i = ind_loop(1), ind_loop(2)                   !3D only
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)              !3D only
+            lt = indmtr_gpu(i,j,k,param_int)              !3D only
+#else
             l  =  inddm(i,j,k)                            !3D only
             lt = indmtr(i,j,k)                            !3D only
+#endif
             lvo= lt                                       !3D only
             sens=1.                                       !3D only
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_k.for"  !3D only
@@ -215,22 +223,36 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscRans_k.for"             !3D only
 #include    "FastS/Compute/assemble_drodm_mono.for"            !3D only
                                                           !3D only
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k+1,param_int)            !3D only
+            lt = indmtr_gpu(i,j,k+1,param_int)            !3D only
+#else
             l  =  inddm(i,j,k+1)                          !3D only
             lt = indmtr(i,j,k+1)                          !3D only
+#endif
             lvo= lt                                       !3D only
             sens=-1.                                      !3D only
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_k.for"  !3D only
 #include    "FastS/Compute/FLUX_CONV/fluFaceRans_k.for"   !3D only
 #include    "FastS/Compute/fluViscLaminar_k.for"          !3D only
 #include    "FastS/Compute/fluViscRans_k.for"             !3D only
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)              !3D only
+#else
             l  =  inddm(i,j,k)                            !3D only
+#endif
 #include    "FastS/Compute/assemble_drodm_mono.for"            !3D only
         ENDDO                                             !3D only
 !$OMP SIMD
         DO i = ind_loop(1), ind_loop(2)
 
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)
+            lt = indmtr_gpu(i,j,k,param_int)
+#else
             l  =  inddm(i,j,k)
             lt = indmtr(i,j,k)
+#endif
             lvo= lt
             sens=1.
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_j.for"
@@ -239,21 +261,35 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include    "FastS/Compute/fluViscRans_j.for"
 #include    "FastS/Compute/assemble_drodm_mono.for"
 
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j+1,k,param_int)
+            lt = indmtr_gpu(i,j+1,k,param_int)
+#else
             l  =  inddm(i,j+1,k)
             lt = indmtr(i,j+1,k)
+#endif
             lvo= lt
             sens=-1.
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_j.for"
 #include    "FastS/Compute/FLUX_CONV/fluFaceRans_j.for"
 #include    "FastS/Compute/fluViscLaminar_j.for"
 #include    "FastS/Compute/fluViscRans_j.for"
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)
+#else
             l  =  inddm(i,j,k)
+#endif
 #include    "FastS/Compute/assemble_drodm_mono.for"
         ENDDO   
 !$OMP SIMD                                        
         DO i = ind_loop(1), ind_loop(2)
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)
+            lt = indmtr_gpu(i,j,k,param_int)
+#else
             l  =  inddm(i,j,k)
             lt = indmtr(i,j,k)
+#endif
             lvo= lt
             sens=1.
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_i.for"
@@ -264,15 +300,24 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
         ENDDO !do i
 !$OMP SIMD
         DO i = ind_loop(1), ind_loop(2)
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i+1,j,k,param_int)
+            lt = indmtr_gpu(i+1,j,k,param_int)
+#else
             l  =  inddm(i+1,j,k)
             lt = indmtr(i+1,j,k)
+#endif
             lvo= lt
             sens=-1.
 #include    "FastS/Compute/FLUX_CONV/fluFaceEuler_i.for"
 #include    "FastS/Compute/FLUX_CONV/fluFaceRans_i.for"
 #include    "FastS/Compute/fluViscLaminar_i.for"
 #include    "FastS/Compute/fluViscRans_i.for"
+#ifdef _OPENMP_GPU_OFFLOAD
+            l  = inddm_gpu(i,j,k,param_int)
+#else
             l  =  inddm(i,j,k)
+#endif
 #include    "FastS/Compute/assemble_drodm_mono.for"
 
         ENDDO !do i
