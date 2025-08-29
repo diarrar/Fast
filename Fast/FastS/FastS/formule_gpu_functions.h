@@ -13,5 +13,15 @@ C    Additional inddm macros for i+1, j+1, k+1 cases
 C    Macro for indmtr - adresse interface pour tableau metric
 #define indmtr_gpu(i,j,k) (1 + ((i) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR) + ((j) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR+1) + ((k) + param_int(NIJK_MTR+4) - 1)*param_int(NIJK_MTR+2))
 
+C    Additional indmtr macros for i+1, j+1, k+1 cases
+#define indmtr_gpu_i_p1(i,j,k) (1 + ((i)+1 + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR) + ((j) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR+1) + ((k) + param_int(NIJK_MTR+4) - 1)*param_int(NIJK_MTR+2))
+#define indmtr_gpu_j_p1(i,j,k) (1 + ((i) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR) + ((j)+1 + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR+1) + ((k) + param_int(NIJK_MTR+4) - 1)*param_int(NIJK_MTR+2))
+#define indmtr_gpu_k_p1(i,j,k) (1 + ((i) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR) + ((j) + param_int(NIJK_MTR+3) - 1)*param_int(NIJK_MTR+1) + ((k)+1 + param_int(NIJK_MTR+4) - 1)*param_int(NIJK_MTR+2))
+
 C    Macro for indven - adresse interface pour tableau vitesse entrainement  
 #define indven_gpu(i,j,k) (1 + ((i) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT) + ((j) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT+1) + ((k) + param_int(NIJK_VENT+4) - 1)*param_int(NIJK_VENT+2))
+
+C    Additional indven macros for i+1, j+1, k+1 cases
+#define indven_gpu_i_p1(i,j,k) (1 + ((i)+1 + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT) + ((j) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT+1) + ((k) + param_int(NIJK_VENT+4) - 1)*param_int(NIJK_VENT+2))
+#define indven_gpu_j_p1(i,j,k) (1 + ((i) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT) + ((j)+1 + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT+1) + ((k) + param_int(NIJK_VENT+4) - 1)*param_int(NIJK_VENT+2))
+#define indven_gpu_k_p1(i,j,k) (1 + ((i) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT) + ((j) + param_int(NIJK_VENT+3) - 1)*param_int(NIJK_VENT+1) + ((k)+1 + param_int(NIJK_VENT+4) - 1)*param_int(NIJK_VENT+2))
