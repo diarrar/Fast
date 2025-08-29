@@ -74,6 +74,9 @@ C Var local
 #include "FastS/formule_param.h"
 #include "FastS/formule_mtr_param.h"
 #include "FastS/formule_vent_param.h"
+#ifdef _OPENMP_GPU_OFFLOAD
+#include "FastS/formule_gpu_functions.h"
+#endif
 
 
 
@@ -400,9 +403,9 @@ C        First boundary layer: k = ind_loop(6)
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
 #ifdef _OPENMP_GPU_OFFLOAD
-                l    = inddm_gpu(  i,      j, k,              param_int ) 
-                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )
-                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )
+                l    = inddm_gpu(i,j,k) 
+                ldp  = indven_gpu_k_p1(i,j,ind_loop(6))
+                lmtr = indmtr_gpu_k_p1(i,j,ind_loop(6))
 #else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )
@@ -428,9 +431,9 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
 #ifdef _OPENMP_GPU_OFFLOAD
-                l    = inddm_gpu(  i,      j, k,              param_int ) 
-                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )  !next rank
-                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )  !next rank
+                l    = inddm_gpu(i,j,k) 
+                ldp  = indven_gpu_k_p1(i,j,ind_loop(6))  !next rank
+                lmtr = indmtr_gpu_k_p1(i,j,ind_loop(6))  !next rank
 #else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )  !next rank
@@ -459,9 +462,9 @@ C        First boundary layer: k = ind_loop(6) (turbulent case)
 !DEC$ IVDEP
               do i = ind_loop(1), ind_loop(2)
 #ifdef _OPENMP_GPU_OFFLOAD
-                l    = inddm_gpu(  i,      j, k,              param_int ) 
-                ldp  = indven_gpu( i,      j, ind_loop(6)+1,  param_int )
-                lmtr = indmtr_gpu( i,      j, ind_loop(6)+1,  param_int )
+                l    = inddm_gpu(i,j,k) 
+                ldp  = indven_gpu_k_p1(i,j,ind_loop(6))
+                lmtr = indmtr_gpu_k_p1(i,j,ind_loop(6))
 #else
                 l    = inddm(  i,      j, k              ) 
                 ldp  = indven( i,      j, ind_loop(6)+1  )
