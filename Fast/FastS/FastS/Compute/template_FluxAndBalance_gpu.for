@@ -48,10 +48,7 @@ c***********************************************************************
       INTEGER_E param_int(0:136)
       REAL_E param_real(0:74)
 
-#ifdef _OPENMP_GPU_OFFLOAD
-C     Declare param arrays as device resident to avoid mapping issues
-!$OMP DECLARE TARGET(param_int, param_real)
-#endif
+C     Parameter arrays will be mapped explicitly in TARGET DATA region
 
       REAL_E  xmut( param_int(NDIMDX) )
       REAL_E   rop( param_int(NDIMDX)     * param_int(NEQ)     )
@@ -195,7 +192,7 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include "FastS/Compute/pragma_align.for"
 
 #ifdef _OPENMP_GPU_OFFLOAD
-!$OMP TARGET DATA MAP(to: ind_loop, ind_dm,
+!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
 !$OMP&                   ti, tj, tk, vol, xmut)
 !$OMP&            MAP(tofrom: drodm)

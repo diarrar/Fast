@@ -26,7 +26,10 @@ c***********************************************************************
 
 #include "FastS/param_solver.h"
 
-      INTEGER_E idir,lrhs, neq_mtr, ind_loop(6), param_int(0:*)
+      INTEGER_E param_int(0:136)
+
+      INTEGER_E idir,lrhs, neq_mtr, ind_loop(6)
+      INTEGER_E param_int(0:136)
 
       REAL_E x( param_int(NDIMDX_XYZ) ),y( param_int(NDIMDX_XYZ) ),
      &       z( param_int(NDIMDX_XYZ) ),random(size_data)
@@ -37,7 +40,7 @@ c***********************************************************************
       REAL_E tijk   (param_int(NDIMDX_MTR ), neq_mtr             )
       REAL_E state(param_int(NEQ))
       REAL_E mobile_coef, c4,c5,c6 
-      REAL_E param_real(0:*)
+      REAL_E param_real(0:74)
       REAL_E lund_param(5)
 
 C...  Valeurs des grandeurs thermo imposees  (insert1)
