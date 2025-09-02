@@ -192,9 +192,36 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 #include "FastS/Compute/pragma_align.for"
 
 #ifdef _OPENMP_GPU_OFFLOAD
-!$OMP TARGET DATA MAP(to: param_int, param_real, ind_loop, ind_dm,
+C     Pre-compute parameter values to avoid array access within GPU target region
+C     This fixes AMD GPU memory access faults by eliminating parameter array access in GPU kernels
+      INTEGER_E nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val
+      INTEGER_E nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val  
+      INTEGER_E nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val
+
+      nijk_val = param_int(NIJK)
+      nijk1_val = param_int(NIJK+1) 
+      nijk2_val = param_int(NIJK+2)
+      nijk3_val = param_int(NIJK+3)
+      nijk4_val = param_int(NIJK+4)
+
+      nijk_mtr_val = param_int(NIJK_MTR)
+      nijk_mtr1_val = param_int(NIJK_MTR+1)
+      nijk_mtr2_val = param_int(NIJK_MTR+2) 
+      nijk_mtr3_val = param_int(NIJK_MTR+3)
+      nijk_mtr4_val = param_int(NIJK_MTR+4)
+
+      nijk_vent_val = param_int(NIJK_VENT)
+      nijk_vent1_val = param_int(NIJK_VENT+1)
+      nijk_vent2_val = param_int(NIJK_VENT+2)
+      nijk_vent3_val = param_int(NIJK_VENT+3) 
+      nijk_vent4_val = param_int(NIJK_VENT+4)
+
+!$OMP TARGET DATA MAP(to: ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
-!$OMP&                   ti, tj, tk, vol, xmut)
+!$OMP&                   ti, tj, tk, vol, xmut,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val)
 !$OMP&            MAP(tofrom: drodm)
 #endif
 

@@ -88,6 +88,32 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
      &                   ic,jc,kc,kc_vent,
      &                   ci_mtr,cj_mtr,ck_mtr,ck_vent,c_ale)
 
+#ifdef _OPENMP_GPU_OFFLOAD
+C     Pre-compute parameter values to avoid array access within GPU target region
+C     This fixes AMD GPU memory access faults by eliminating parameter array access in GPU kernels
+      INTEGER_E nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val
+      INTEGER_E nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val  
+      INTEGER_E nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val
+
+      nijk_val = param_int(NIJK)
+      nijk1_val = param_int(NIJK+1) 
+      nijk2_val = param_int(NIJK+2)
+      nijk3_val = param_int(NIJK+3)
+      nijk4_val = param_int(NIJK+4)
+
+      nijk_mtr_val = param_int(NIJK_MTR)
+      nijk_mtr1_val = param_int(NIJK_MTR+1)
+      nijk_mtr2_val = param_int(NIJK_MTR+2) 
+      nijk_mtr3_val = param_int(NIJK_MTR+3)
+      nijk_mtr4_val = param_int(NIJK_MTR+4)
+
+      nijk_vent_val = param_int(NIJK_VENT)
+      nijk_vent1_val = param_int(NIJK_VENT+1)
+      nijk_vent2_val = param_int(NIJK_VENT+2)
+      nijk_vent3_val = param_int(NIJK_VENT+3) 
+      nijk_vent4_val = param_int(NIJK_VENT+4)
+#endif
+
       c_ale = c_ale*mobile_coef
       if(lrhs.eq.1) c_ale = 0.
 
@@ -115,7 +141,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -145,7 +173,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)  
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -182,7 +212,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -211,7 +243,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -248,7 +282,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -282,7 +318,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -323,7 +361,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -357,7 +397,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -399,7 +441,9 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
 C        First boundary layer: k = ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -428,7 +472,9 @@ C        First boundary layer: k = ind_loop(6)
 C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -460,7 +506,9 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 C        First boundary layer: k = ind_loop(6) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -489,7 +537,9 @@ C        First boundary layer: k = ind_loop(6) (turbulent case)
 C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -522,7 +572,9 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent c
 C        First boundary layer: k = ind_loop(5)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -545,7 +597,9 @@ C        First boundary layer: k = ind_loop(5)
 C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -571,7 +625,9 @@ C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
 C        First boundary layer: k = ind_loop(5) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
@@ -594,7 +650,9 @@ C        First boundary layer: k = ind_loop(5) (turbulent case)
 C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6) (turbulent case)
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP TARGET DATA MAP(to: ind_loop, &
-!$OMP&                   param_int, param_real,
+!$OMP&                   nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val,
+!$OMP&                   nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val,
+!$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
 !$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
