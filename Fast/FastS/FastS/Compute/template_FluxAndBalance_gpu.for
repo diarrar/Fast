@@ -225,10 +225,10 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&            MAP(tofrom: drodm)
 #endif
 
-      DO k = ind_loop(5), ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
+      DO k = ind_loop(5), ind_loop(6)
        DO j = ind_loop(3), ind_loop(4)
 !$OMP SIMD                                                !3D only
         DO i = ind_loop(1), ind_loop(2)                   !3D only
@@ -346,10 +346,10 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 
         ENDDO !do i
       ENDDO !do j
+      ENDDO !do k
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
 #endif
-      ENDDO !do k
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET DATA
