@@ -111,7 +111,7 @@ for ale in TypeMotion:
                         if 'avmin(c,r)' in l: lines = lines[:c] + lines[c+1:]; c-=1
                         c += 1
                     for i in range( len(lines) ):
-                        lines[i]=lines[i].replace("psiroe,avmin", 'psiroe')
+                        lines[i]=lines[i].replace("psiroe,avmin,", 'psiroe,').replace("psiroe,avmin", 'psiroe')
 
                 # suppression Vitesse entrainement si ale=faux
                 if ale == '':
