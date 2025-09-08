@@ -204,10 +204,10 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
 !$OMP&            MAP(tofrom: drodm)
 #endif
 
-      DO k = ind_loop(5), ind_loop(6)
 #ifdef _OPENMP_GPU_OFFLOAD
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
+      DO k = ind_loop(5), ind_loop(6)
        DO j = ind_loop(3), ind_loop(4)
 
 #include "FastS/Compute/loopI_begin.for"                  !3D only
@@ -251,6 +251,10 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
           endif !
        ENDDO !do j
 
+#ifdef _OPENMP_GPU_OFFLOAD
+!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
+#endif
+
        !Complement fluj en Jmax
        If(jcorr.eq.1) then
 
@@ -267,9 +271,6 @@ CC!DIR$ ASSUME_ALIGNED xmut: CACHELINE
          enddo
         Endif
 
-#ifdef _OPENMP_GPU_OFFLOAD
-!$OMP END TARGET TEAMS DISTRIBUTE PARALLEL DO
-#endif
       ENDDO !do k
 
 #ifdef _OPENMP_GPU_OFFLOAD

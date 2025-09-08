@@ -146,7 +146,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
@@ -178,7 +178,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)  
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
@@ -217,7 +217,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
@@ -248,7 +248,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
           do j = ind_loop(3), ind_loop(4)
@@ -287,7 +287,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
 
@@ -323,7 +323,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
 
@@ -366,7 +366,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
 
@@ -402,7 +402,7 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)
 
@@ -446,7 +446,7 @@ C        First boundary layer: k = ind_loop(6)
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           k = ind_loop(6)
            do j = ind_loop(3), ind_loop(4)
@@ -477,7 +477,7 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)-1
             do j = ind_loop(3), ind_loop(4)
@@ -511,7 +511,7 @@ C        First boundary layer: k = ind_loop(6) (turbulent case)
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           k = ind_loop(6)
            do j = ind_loop(3), ind_loop(4)
@@ -542,7 +542,7 @@ C        Interior boundary layers: k = ind_loop(5) to ind_loop(6)-1 (turbulent c
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5), ind_loop(6)-1
             do j = ind_loop(3), ind_loop(4)
@@ -577,7 +577,7 @@ C        First boundary layer: k = ind_loop(5)
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           k = ind_loop(5)
            do j = ind_loop(3), ind_loop(4)
@@ -602,7 +602,7 @@ C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6)
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5)+1, ind_loop(6)
             do j = ind_loop(3), ind_loop(4)
@@ -630,7 +630,7 @@ C        First boundary layer: k = ind_loop(5) (turbulent case)
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           k = ind_loop(5)
            do j = ind_loop(3), ind_loop(4)
@@ -655,7 +655,7 @@ C        Interior boundary layers: k = ind_loop(5)+1 to ind_loop(6) (turbulent c
 !$OMP&                   nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val,
 !$OMP&                   x, y, z, rop, xmut) &
 !$OMP&            MAP(tofrom: state)
-!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO
+!$OMP TARGET TEAMS DISTRIBUTE PARALLEL DO COLLAPSE(2)
 #endif
           do k = ind_loop(5)+1, ind_loop(6)
             do j = ind_loop(3), ind_loop(4)
