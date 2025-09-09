@@ -88,9 +88,9 @@ C Var loc
      & qn,r,v,w,h,q,r_1,psiroe,avmin, xktvol, xmulam, xmutur, xmutot,
      & c50,c51,c52,c53,c54,sens
 
-C     Timing instrumentation variables
-      REAL_E flu_timer_start, flu_timer_end, flu_timer_total
-      LOGICAL, SAVE :: flu_timer_first_call = .TRUE.
+C     Timing instrumentation variables (thread-safe)
+      REAL_E flu_timer_start, flu_timer_end
+      REAL_E, SAVE :: flu_timer_total = 0.0
       INTEGER, SAVE :: flu_call_count = 0
 
 #include "FastS/formule_param.h"
@@ -223,10 +223,6 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 
 C     Initialize timing instrumentation
 #ifdef _OPENMP
-      if (flu_timer_first_call) then
-        flu_timer_total = 0.0
-        flu_timer_first_call = .FALSE.
-      endif
       flu_timer_start = omp_get_wtime()
 #endif
 
@@ -369,13 +365,18 @@ C     Initialize timing instrumentation
 !$OMP END TARGET DATA
 #endif
 
-C     Finalize timing instrumentation and print results
+C     Finalize timing instrumentation and print results (thread-safe)
 #ifdef _OPENMP  
       flu_timer_end = omp_get_wtime()
+      
+      ! Thread-safe atomic updates to shared timing variables
+!$OMP ATOMIC
       flu_call_count = flu_call_count + 1
+!$OMP ATOMIC
       flu_timer_total = flu_timer_total + (flu_timer_end - flu_timer_start)
       
-      ! Print timing every 100 calls for monitoring
+      ! Print timing every 100 calls for monitoring (only one thread prints)
+!$OMP CRITICAL
       if (mod(flu_call_count, 100) == 0) then
         write(*,'(A,A,A,I0,A,F12.6,A,F12.8)') &
           'flu_* routine: ', 'flu_lam_template', &
@@ -383,6 +384,7 @@ C     Finalize timing instrumentation and print results
           ', total_time: ', flu_timer_total, &
           's, avg_per_call: ', flu_timer_total/flu_call_count
       endif
+!$OMP END CRITICAL
 #endif
 
       end
