@@ -88,6 +88,11 @@ C Var loc
      & qn,r,v,w,h,q,r_1,psiroe,avmin, xktvol, xmulam, xmutur, xmutot,
      & c50,c51,c52,c53,c54,sens
 
+C     Timing instrumentation variables
+      REAL_E flu_timer_start, flu_timer_end, flu_timer_total
+      LOGICAL, SAVE :: flu_timer_first_call = .TRUE.
+      INTEGER, SAVE :: flu_call_count = 0
+
 #include "FastS/formule_param.h"
 #include "FastS/formule_mtr_param.h" 
 #include "FastS/formule_vent_param.h"                               !ALE only
@@ -215,6 +220,15 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
       nijk_vent2_val = param_int(NIJK_VENT+2)
       nijk_vent3_val = param_int(NIJK_VENT+3) 
       nijk_vent4_val = param_int(NIJK_VENT+4)
+
+C     Initialize timing instrumentation
+#ifdef _OPENMP
+      if (flu_timer_first_call) then
+        flu_timer_total = 0.0
+        flu_timer_first_call = .FALSE.
+      endif
+      flu_timer_start = omp_get_wtime()
+#endif
 
 !$OMP TARGET DATA MAP(to: ind_loop, ind_dm,
 !$OMP&                   rop, wig, venti, ventj, ventk,
@@ -353,6 +367,22 @@ C     This fixes AMD GPU memory access faults by eliminating parameter array acc
 
 #ifdef _OPENMP_GPU_OFFLOAD
 !$OMP END TARGET DATA
+#endif
+
+C     Finalize timing instrumentation and print results
+#ifdef _OPENMP  
+      flu_timer_end = omp_get_wtime()
+      flu_call_count = flu_call_count + 1
+      flu_timer_total = flu_timer_total + (flu_timer_end - flu_timer_start)
+      
+      ! Print timing every 100 calls for monitoring
+      if (mod(flu_call_count, 100) == 0) then
+        write(*,'(A,A,A,I0,A,F12.6,A,F12.8)') &
+          'flu_* routine: ', 'flu_lam_template', &
+          ', calls: ', flu_call_count, &
+          ', total_time: ', flu_timer_total, &
+          's, avg_per_call: ', flu_timer_total/flu_call_count
+      endif
 #endif
 
       end
