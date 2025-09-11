@@ -378,11 +378,11 @@ C     Finalize timing instrumentation and print results (thread-safe)
       ! Print timing every 100 calls for monitoring (only one thread prints)
 !$OMP CRITICAL
       if (mod(flu_call_count, 100) == 0) then
-        write(*,'(A,A,A,I0,A,F12.6,A,F12.8)') &
-          'flu_* routine: ', 'flu_lam_template', &
-          ', calls: ', flu_call_count, &
-          ', total_time: ', flu_timer_total, &
-          's, avg_per_call: ', flu_timer_total/flu_call_count
+        write(*,'(A,A,A,I0,A,F12.6,A,F12.8)')
+     &    'flu_* routine: ', 'flu_lam_template',
+     &    ', calls: ', flu_call_count,
+     &    ', total_time: ', flu_timer_total,
+     &    's, avg_per_call: ', flu_timer_total/flu_call_count
       endif
 !$OMP END CRITICAL
 #endif
