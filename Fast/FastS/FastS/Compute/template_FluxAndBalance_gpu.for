@@ -100,6 +100,8 @@ C     Timing instrumentation variables (thread-safe)
 #include "FastS/formule_gpu_functions.h"
 #endif
 
+      include 'omp_lib.h'
+
       !limiteur 'minmod'
       avmin(c,r)=sign(1.,c)*max(0.,min(abs(c),sign(1.,c)*r))
 
