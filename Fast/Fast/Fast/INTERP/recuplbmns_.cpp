@@ -84,7 +84,7 @@ PyObject* K_FAST::recuplbmns_(PyObject* self, PyObject* args)
 
   /// Recuperation du tableau de stockage des valeurs
   PyObject* interpArray = PyDict_GetItemString(work,"tab_interp"); FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(interpArray, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(interpArray, stk); E_Float* iptstk = stk->begin();
 
   E_Int stk_size    = stk[0].getSize();
   //cout << "taille tab stockage " << stk_size << endl;
@@ -94,10 +94,10 @@ PyObject* K_FAST::recuplbmns_(PyObject* self, PyObject* args)
   /* Extraction tableau int et real de tc */
   /*--------------------------------------*/
   FldArrayI* param_int;
-  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int, true);
+  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int);
   E_Int* ipt_param_int = param_int->begin();
   FldArrayF* param_real;
-  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real, true);
+  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real);
   E_Float* ipt_param_real = param_real->begin();
 
   //cout << vartype << nvars << endl;

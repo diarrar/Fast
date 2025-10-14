@@ -91,32 +91,32 @@ PyObject* K_FASTS::dtlocal2para_(PyObject* self, PyObject* args)
  
  /// Recuperation du tableau de stockage des valeurs
   FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(stock, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(stock, stk); E_Float* iptstk = stk->begin();
 
   /// Recuperation du tableau de stockage des flux
   FldArrayF* drodmstk;
-  K_NUMPY::getFromNumpyArray(drodmstock,drodmstk, true); E_Float* iptdrodmstk = drodmstk->begin();
+  K_NUMPY::getFromNumpyArray(drodmstock,drodmstk); E_Float* iptdrodmstk = drodmstk->begin();
 
   /// Recuperation du tableau de stockage des flux pour conservativite
   FldArrayF* cstk;
-  K_NUMPY::getFromNumpyArray(constk, cstk, true); E_Float* iptcstk = cstk->begin();
+  K_NUMPY::getFromNumpyArray(constk, cstk); E_Float* iptcstk = cstk->begin();
 
   /// Tableau de travail communs explicite/implicite
   PyObject* drodmArray = PyDict_GetItemString(work,"rhs"); FldArrayF* drodm;
-  K_NUMPY::getFromNumpyArray(drodmArray, drodm, true); E_Float* iptdrodm = drodm->begin();
+  K_NUMPY::getFromNumpyArray(drodmArray, drodm); E_Float* iptdrodm = drodm->begin();
   
   // Tableau de travail coe   ( dt/vol et diags LU)
   PyObject* coeArray = PyDict_GetItemString(work,"coe"); FldArrayF* coe;
-  K_NUMPY::getFromNumpyArray(coeArray, coe, true); E_Float* iptcoe = coe->begin();
+  K_NUMPY::getFromNumpyArray(coeArray, coe); E_Float* iptcoe = coe->begin();
 
   /*-------------------------------------*/
   /* Extraction tableau int et real      */
   /*-------------------------------------*/
   FldArrayI* param_int;
-  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int, true);
+  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int);
   E_Int* ipt_param_int = param_int->begin();
   FldArrayF* param_real;
-  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real, true);
+  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real);
   E_Float* ipt_param_real = param_real->begin();
 
   E_Int nvars;

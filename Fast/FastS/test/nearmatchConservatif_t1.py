@@ -57,9 +57,10 @@ for base in Internal.getBases(tb):
 # t,tc=AppIBM.prepare1(tb, None, None,   vmin=15, snearsf=snearsf, frontType=frontType, cleanCellN=False,
 #                      nature=1, order=2, ext=ext, optimized=optimized, check=False)
 
-t,tc=X_IBM.prepareIBMData(tb, None, None, vmin=15, snearsf=snearsf, frontType=frontType,
-                          ext=ext+1, optimized=optimized, check=False, cleanCellN=False)
+t,tc=X_IBM.prepareIBMData(tb, None, None, vmin=15, snearsf=snearsf, frontType=frontType,verbose=3,
+                          ext=2, nature=0, extrap=0, optimized=optimized, check=False, cleanCellN=False)
 
+'''
 ####
 # The following lines are to avoid regression
 ####
@@ -111,6 +112,7 @@ for b in Internal.getBases(tc):
                 dictOfIBCRZones[rcvzoneL] = list(listOfIBCRZonesL)
             else:
                 pos += 1
+'''
 ####
 
 X_IBM._buildConservativeFlux(t, tc, verbose=1)
@@ -119,6 +121,11 @@ t1c= Internal.copyRef(tc)
 test.testT(t1c, 1)
 t1= Internal.copyRef(t)
 test.testT(t1, 2)
+'''
+'''
+
+#stop
+
 
 modulo_verif=10
 numb = {}
@@ -145,6 +152,10 @@ t1c= Internal.copyRef(tc)
 test.testT(t1c, 3)
 t1= Internal.copyRef(t)
 test.testT(t1, 4)
+'''
+'''
+
+FastC.HOOK["dtloc"][12]=2
 
 for it in range(100):
     FastS._compute(t, metrics, it, tc)

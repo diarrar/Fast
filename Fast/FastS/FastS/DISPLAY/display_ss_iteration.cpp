@@ -68,7 +68,7 @@ PyObject* K_FASTS::display_ss_iteration(PyObject* self, PyObject* args)
     E_Float* cvg_zone = ipt_cvg + 4*neq*nd;
 
     //E_Float* cvg_ptr; E_Int cvg_size; E_Int cvg_nfld;
-    //K_NUMPY::getFromNumpyArray(cvg_numpy, cvg_ptr, cvg_size, cvg_nfld, true); 
+    //K_NUMPY::getFromNumpyArray(cvg_numpy, cvg_ptr, cvg_size, cvg_nfld); 
  
     //printf(" cvg_size %d %d \n",cvg_size,cvg_nfld);
 

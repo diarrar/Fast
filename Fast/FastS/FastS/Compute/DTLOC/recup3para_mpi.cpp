@@ -73,12 +73,12 @@ PyObject* K_FASTS::recup3para_mpi(PyObject* self, PyObject* args)
 
   /// Recuperation du tableau de stockage des valeurs
   PyObject* dtlocArray = PyDict_GetItemString(work,"tab_dtloc"); FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(dtlocArray, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, stk); E_Float* iptstk = stk->begin();
   /*-------------------------------------*/
   /* Extraction tableau int et real      */
   /*-------------------------------------*/
   FldArrayI* param_int;
-  K_NUMPY::getFromNumpyArray(pyParam_int, param_int, true); E_Int* ipt_param_int = param_int->begin();
+  K_NUMPY::getFromNumpyArray(pyParam_int, param_int); E_Int* ipt_param_int = param_int->begin();
   
 #pragma omp parallel default(shared) //private(cycle)
   {

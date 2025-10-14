@@ -59,19 +59,19 @@ PyObject* K_FASTS::_interpfromzone(PyObject* self, PyObject* args)
 
  FldArrayF* coordDf;
  E_Float* ipt_coordDf; 
- K_NUMPY::getFromNumpyArray(coordD, coordDf, true); ipt_coordDf = coordDf->begin();
+ K_NUMPY::getFromNumpyArray(coordD, coordDf); ipt_coordDf = coordDf->begin();
 
  FldArrayF* coordRf;
  E_Float* ipt_coordRf; 
- K_NUMPY::getFromNumpyArray(coordR, coordRf, true); ipt_coordRf = coordRf->begin();
+ K_NUMPY::getFromNumpyArray(coordR, coordRf); ipt_coordRf = coordRf->begin();
 
  FldArrayF* fieldDf;
  E_Float* ipt_fieldDf; 
- K_NUMPY::getFromNumpyArray(fieldD, fieldDf, true); ipt_fieldDf = fieldDf->begin();
+ K_NUMPY::getFromNumpyArray(fieldD, fieldDf); ipt_fieldDf = fieldDf->begin();
 
  FldArrayF* fieldRf;
  E_Float* ipt_fieldRf; 
- K_NUMPY::getFromNumpyArray(fieldR, fieldRf, true); ipt_fieldRf = fieldRf->begin();
+ K_NUMPY::getFromNumpyArray(fieldR, fieldRf); ipt_fieldRf = fieldRf->begin();
 
 for (E_Int ir = 0; ir < nbptR; ++ir)
 {

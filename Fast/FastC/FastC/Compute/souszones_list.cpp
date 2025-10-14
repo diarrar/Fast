@@ -108,7 +108,7 @@ PyObject* K_FASTC::souszones_list(PyObject* self, PyObject* args)
 
   // Tableau de parametre schema temporel
   PyObject* dtlocArray  = PyDict_GetItemString(work, "dtloc"); FldArrayI*  dtloc;
-  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc = dtloc->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc = dtloc->begin();
 
   E_Int nidom = PyList_Size(zones);
 
@@ -123,7 +123,7 @@ PyObject* K_FASTC::souszones_list(PyObject* self, PyObject* args)
   else mx_omp_size_int = PyInt_AsLong(tmp);
 
   PyObject* iskipArray = PyDict_GetItemString(work,"skip_lu"); FldArrayI* iskip_lu;
-  K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu, true); E_Int* ipt_iskip_lu = iskip_lu->begin();
+  K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu); E_Int* ipt_iskip_lu = iskip_lu->begin();
 
  
   E_Int**   ipt_param_int;  E_Int** ipt_ind_dm; E_Int** ipt_it_lu_ssdom; E_Float** ipt_param_real;

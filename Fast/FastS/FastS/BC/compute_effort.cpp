@@ -81,13 +81,13 @@ PyObject* K_FASTS::compute_effort(PyObject* self, PyObject* args)
 
   /// Tableau pour stockage senseur oscillation
   PyObject* wigArray = PyDict_GetItemString(work,"wiggle"); FldArrayF* wig; FldArrayF* eff; FldArrayF* pos;
-  K_NUMPY::getFromNumpyArray(wigArray, wig, true); E_Float* iptwig = wig->begin();
-  K_NUMPY::getFromNumpyArray(effarray, eff, true); E_Float* ipteff = eff->begin();
-  K_NUMPY::getFromNumpyArray(pos_eff , pos, true); E_Float* xyz_ref= pos->begin();
+  K_NUMPY::getFromNumpyArray(wigArray, wig); E_Float* iptwig = wig->begin();
+  K_NUMPY::getFromNumpyArray(effarray, eff); E_Float* ipteff = eff->begin();
+  K_NUMPY::getFromNumpyArray(pos_eff , pos); E_Float* xyz_ref= pos->begin();
 
   /// Tableau pour // omp
   PyObject* dtlocArray  = PyDict_GetItemString(work,"dtloc"); FldArrayI* dtloc;
-  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc  = dtloc->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc  = dtloc->begin();
   E_Int nssiter = iptdtloc[0];
   E_Int omp_mode = iptdtloc[ 8 ];
   E_Int shift_omp= iptdtloc[11];

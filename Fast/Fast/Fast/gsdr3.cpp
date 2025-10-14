@@ -249,8 +249,9 @@ E_Int rank =0;
         //---------------------------------------------------------------------
         // -----Boucle sur num.les domaines de la configuration
         // ---------------------------------------------------------------------
-        E_Int shift_zone=0; E_Int shift_wig=0; E_Int shift_coe=0; E_Int nd_current=0;E_Int shift_rk4=0;  E_Int shift_grad=0;
-        E_Int shift_a1=0;   E_Int shift_a3=0;  E_Int shift_a4=0;
+        E_Int nd_current=0;
+        int64_t shift_zone=0; int64_t shift_wig=0; int64_t shift_coe=0; int64_t shift_grad=0;
+        int64_t shift_a1=0;   int64_t shift_a3=0;  int64_t shift_a4=0;
 	E_Float rhs_end=0; E_Int ncells=0;
 
         E_Int nbtask = ipt_omp[nitcfg-1];

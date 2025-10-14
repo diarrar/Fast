@@ -37,9 +37,9 @@ PyObject* K_FASTC::PygetRange( PyObject* self, PyObject* args ) {
 
     FldArrayI* ind_bc;
     FldArrayI* param_int;
-    K_NUMPY::getFromNumpyArray( ind_bcArray, ind_bc, true );
+    K_NUMPY::getFromNumpyArray( ind_bcArray, ind_bc );
     E_Int* ipt_ind_bc = ind_bc->begin( );
-    K_NUMPY::getFromNumpyArray( param_intArray, param_int, true );
+    K_NUMPY::getFromNumpyArray( param_intArray, param_int );
     E_Int* ipt_param_int = param_int->begin( );
 
     getRange( ipt_ind_bc, ipt_param_int + shift + 1, ipt_param_int );

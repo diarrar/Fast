@@ -37,19 +37,14 @@ void K_FASTS::dtlocal2para_c(E_Float**& iptro, E_Float**& iptro_p1,
 
   E_Int omp_mode = 0;
 
-  E_Int shift_zone[nidom];
-  E_Int shift_coe[nidom];
-  E_Int a=0;
-  E_Int b=0;
-  for (E_Int nd = 0; nd < nidom; nd++)
+  int64_t shift_zone[nidom];
+  int64_t shift_coe[nidom];
+  shift_zone[0]=0;
+  shift_coe[0] =0;
+  for (E_Int nd = 1; nd < nidom; nd++)
     {
-      shift_zone[nd]=a;
-      a=a+param_int[nd][ NDIMDX ]*param_int[nd][ NEQ ];	 
-    }
-  for (E_Int nd = 0; nd < nidom; nd++)
-    {
-      shift_coe[nd]=b;
-      b=b+param_int[nd][ NDIMDX ]*param_int[nd][ NEQ_COE ];	 
+      shift_zone[nd] = shift_zone[nd-1] + param_int[nd-1][ NDIMDX ]*param_int[nd-1][ NEQ ];
+      shift_coe[nd ] = shift_coe[nd -1] + param_int[nd-1][ NDIMDX ]*param_int[nd-1][ NEQ_COE ];	 
     }
 
 #pragma omp parallel default(shared) //private(cycle)

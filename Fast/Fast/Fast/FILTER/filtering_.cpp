@@ -104,7 +104,7 @@ PyObject* K_FAST::filtering_(PyObject* self, PyObject* args)
 
   //Reservation tableau travail temporaire
   PyObject* drodm2Array = PyDict_GetItemString(work,"hors_eq"); FldArrayF* drodm2;
-  K_NUMPY::getFromNumpyArray(drodm2Array, drodm2, true); E_Float* iptroflt = drodm2->begin();
+  K_NUMPY::getFromNumpyArray(drodm2Array, drodm2); E_Float* iptroflt = drodm2->begin();
 
   E_Int shift_dom   = 0;
   E_Int shift_roflt = 0;

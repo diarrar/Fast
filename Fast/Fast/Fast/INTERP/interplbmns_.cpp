@@ -45,7 +45,7 @@ PyObject* K_FAST::interplbmns_(PyObject* self, PyObject* args)
   }
 
   PyObject* dtlocArray  = PyDict_GetItemString(work,"dtloc"); FldArrayI* dtloc;
-  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc  = dtloc->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc  = dtloc->begin();
   E_Int nssiter = iptdtloc[0];
   E_Int omp_mode = iptdtloc[8];
   E_Int shift_omp= iptdtloc[11];
