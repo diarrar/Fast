@@ -46,7 +46,7 @@ PyObject* K_FASTS::_applyBC(PyObject* self, PyObject* args)
   PyObject* tmp = PyDict_GetItemString(work,"MX_SSZONE");  E_Int mx_sszone = PyLong_AsLong(tmp);
 
   PyObject* dtlocArray  = PyDict_GetItemString(work,"dtloc"); FldArrayI* dtloc;
-  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc  = dtloc->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc  = dtloc->begin();
   E_Int nssiter = iptdtloc[0];
   E_Int shift_omp= iptdtloc[11];
   E_Int* ipt_omp = iptdtloc + shift_omp;

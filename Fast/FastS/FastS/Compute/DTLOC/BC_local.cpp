@@ -37,24 +37,9 @@ void K_FASTS::BC_local(E_Float**& iptro, E_Float**& iptro_p1, E_Int*& ipt_param_
 
 
 
-  E_Int a=0;
-  E_Int b=0;
-  E_Int* shift_zone = new E_Int[nidom];
-  E_Int* shift_coe  = new E_Int[nidom];
   E_Int process = 1;
   E_Int lrhs=0; E_Int lcorner=0; 
   E_Int npass         = 0;
-
-  for (E_Int nd = 0; nd < nidom; nd++)
-    {
-      shift_zone[nd]=a;
-      a=a+param_intt[nd][ NDIMDX ]*param_intt[nd][ NEQ ];	 
-    }
-  for (E_Int nd = 0; nd < nidom; nd++)
-    {
-      shift_coe[nd]=b;
-      b=b+param_intt[nd][ NDIMDX ]*param_intt[nd][ NEQ_COE ];	 
-    }
 
 #pragma omp parallel default(shared) //private(cycle)
   {
@@ -380,9 +365,6 @@ void K_FASTS::BC_local(E_Float**& iptro, E_Float**& iptro_p1, E_Int*& ipt_param_
       } // boucle NoTransfert
 
   }// fin zone omp 
-
-
-delete [] shift_zone; delete [] shift_coe;
 
 
 }

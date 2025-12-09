@@ -53,23 +53,23 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
   
   /// Recuperation du tableau de stockage des valeurs
   FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(stock, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(stock, stk); E_Float* iptstk = stk->begin();
 
   /// Recuperation du tableau de stockage des flux
   FldArrayF* drodmstk;
-  K_NUMPY::getFromNumpyArray(drodmstock,drodmstk, true); E_Float* iptdrodmstk = drodmstk->begin();
+  K_NUMPY::getFromNumpyArray(drodmstock,drodmstk); E_Float* iptdrodmstk = drodmstk->begin();
 
   /// Recuperation du tableau de stockage des flux pour conservativite
   FldArrayF* cstk;
-  K_NUMPY::getFromNumpyArray(constk, cstk, true); E_Float* iptcstk = cstk->begin();
+  K_NUMPY::getFromNumpyArray(constk, cstk); E_Float* iptcstk = cstk->begin();
 
   /// Recuperation du tableau des flux (drodm)
   PyObject* drodmArray = PyDict_GetItemString(work,"rhs"); FldArrayF* drodm;
-  K_NUMPY::getFromNumpyArray(drodmArray, drodm, true); E_Float* iptdrodm = drodm->begin();
+  K_NUMPY::getFromNumpyArray(drodmArray, drodm); E_Float* iptdrodm = drodm->begin();
    
   /// Tableau de travail coe   ( dt/vol et diags LU)
   PyObject* coeArray = PyDict_GetItemString(work,"coe"); FldArrayF* coe;
-  K_NUMPY::getFromNumpyArray(coeArray, coe, true); E_Float* iptcoe = coe->begin();
+  K_NUMPY::getFromNumpyArray(coeArray, coe); E_Float* iptcoe = coe->begin();
 
   /// Recuperation de param_int, param_real,rop et rop_tmp
   for (E_Int nd = 0; nd < nidom; nd++)
@@ -100,26 +100,15 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
   E_Int c=0;
   E_Int shift;
   E_Int cycle;
-  E_Int a;
-  a=0;
-  E_Int b;
-  b=0;
-  E_Int shift_zone[nidom];
-  E_Int shift_coe[nidom];
-
-     for (E_Int nd = 0; nd < nidom; nd++)
-       {
-	 shift_zone[nd]=a;
-	 a=a+param_int[nd][ NDIMDX ]*param_int[nd][ NEQ ];
-	 //cout << "ndimdx= " << param_int[nd][ NDIMDX ] << endl;
-       }
-      for (E_Int nd = 0; nd < nidom; nd++)
-       {
-	 shift_coe[nd]=b;
-	 b=b+param_int[nd][ NDIMDX ]*param_int[nd][ NEQ_COE ];	 
-       }
-
-
+  int64_t shift_zone[nidom];
+  int64_t shift_coe[nidom];
+  shift_zone[0]=0;
+  shift_coe[0] =0;
+  for (E_Int nd = 1; nd < nidom; nd++)
+    {
+      shift_zone[nd] = shift_zone[nd-1] + param_int[nd-1][ NDIMDX ]*param_int[nd-1][ NEQ ];
+      shift_coe[nd ] = shift_coe[nd -1] + param_int[nd-1][ NDIMDX ]*param_int[nd-1][ NEQ_COE ];	 
+    }
 
    if (param_int[0][RK]==2 and param_int[0][EXPLOC]==1) // Mon schéma
       {      
@@ -186,15 +175,7 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[3]=  param_int[nd][IJKV+1];
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
-		   		   
-		   for (E_Int n = 0; n < nd+1 ; n++)
-		     //for (E_Int n = 0; n < 0 ; n++)
-		     {
-		       c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		    shift=c;
-		    //cout <<"shift_coe= "<< shift_coe[nd] << endl;
-
+		  
 		    c=nd+1;
 		    //c = nd+2;
 		    //c=0;
@@ -203,7 +184,7 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 
 
 
-		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c],iptcstk,iptcoe+shift_coe[nd],nstep,nd);
 		   c=0; 
 
 		   //cout << "coucou conservativite 3" << endl;
@@ -220,13 +201,6 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   	      
-		   for (E_Int n = 0; n < nd-1 ; n++)
-		   //for (E_Int n = 0; n < 0 ; n++)
-		      {
-		              c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		   
-		   shift=c;
 		   //cout <<"c(cons2)=  "<< c << endl;
 		   //c=nd-1;
 		   c=nd-1;
@@ -236,7 +210,7 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 
 		   //cout << "coucou conservativite 3" << endl;
 
-		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c],iptcstk,iptcoe+shift_coe[nd],nstep,nd);
 		   c=0;
 
 		   //cout << "coucou conservativite 3" << endl;
@@ -315,17 +289,10 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   		   
-		   for (E_Int n = 0; n < nd+1 ; n++)
-		   //for (E_Int n = 0; n < 0 ; n++)
-		      {
-		       c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		    shift=c;
-		    //cout <<"c=  "<< c << endl;
 		    c=nd+1;
 		    //c=0;
 		   imax=1;
-		   //conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   //conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0;  
 		}
 	      else if(param_int[nd][LEVELG]>param_int[nd][LEVEL] and param_int[nd][LEVEL]>param_int[nd][LEVELD]) /// savoir quelles colonnes on prend
@@ -340,20 +307,12 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   	      
-		   for (E_Int n = 0; n < nd-1 ; n++)
-		   //for (E_Int n = 0; n < 0 ; n++)
-		      {
-		              c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		   
-		   shift=c;
-		   //cout <<"c(cons2)= "<< c << endl;
 		   c=nd-1;
 		   //c=0;
 		   imax=param_int[c][IJKV];
 		   //cout <<"param(IJKV)(cons2)= "<< imax << endl;
 		 
-		   //conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   //conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0;
 		   
 		}
@@ -461,20 +420,13 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   		   
-		   for (E_Int n = 0; n < nd+1 ; n++)
-		     {
-		       c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		    shift=c;
-		    //cout <<"shift_coe= "<< shift_coe[nd] << endl;
-
 		   c=nd+1;
 		   //cout <<"c=  "<< c << endl;
 		   imax=1;
 
 		   //cout << "coucou conservativite 3" << endl;
 
-		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0; 
 
 		   //cout << "coucou conservativite 3" << endl;
@@ -491,20 +443,13 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   	      
-		   for (E_Int n = 0; n < nd-1 ; n++)
-		      {
-		              c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		   
-		   shift=c;
-		   //cout <<"c(cons2)=  "<< c << endl;
 		   c=nd-1;
 		   imax=param_int[c][IJKV];
 		   //cout <<"param(IJKV)(cons2)=  "<< imax << endl;
 
 		   //cout << "coucou conservativite 3" << endl;
 
-		   conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0;
 
 		   //cout << "coucou conservativite 3" << endl;
@@ -583,15 +528,9 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   		   
-		   for (E_Int n = 0; n < nd+1 ; n++)
-		      {
-		       c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		    shift=c;
-		    //cout <<"c=  "<< c << endl;
 		   c=nd+1; 
 		   imax=1;
-		   //conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   //conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0;  
 		}
 	      else if(param_int[nd][LEVELG]>param_int[nd][LEVEL] and param_int[nd][LEVEL]>param_int[nd][LEVELD]) /// savoir quelles colonnes on prend
@@ -606,18 +545,11 @@ PyObject* K_FASTS::stockrecup(PyObject* self, PyObject* args)
 		   ind_loop[4]=  1;
 		   ind_loop[5]=  param_int[nd][IJKV+2];
 		   	      
-		   for (E_Int n = 0; n < nd-1 ; n++)
-		      {
-		              c=c+param_int[n][ NDIMDX ]*param_int[n][ NEQ ];	 
-		      }
-		   
-		   shift=c;
-		   //cout <<"c(cons2)= "<< c << endl;
 		   c=nd-1;
 		   imax=param_int[c][IJKV];
 		   //cout <<"param(IJKV)(cons2)= "<< imax << endl;
 		 
-		   //conservativite32_(idir,param_int[nd],param_real[nd],param_int[c],ind_loop,imax,iptro[nd],iptdrodm + shift_zone[nd],iptdrodm + shift,iptcstk,iptcoe+shift_coe[nd],nstep,nd);
+		   //conservativite32_(idir,param_int[nd], param_real[nd], param_int[c], ind_loop, imax, iptro[nd], iptdrodm + shift_zone[nd],iptdrodm + shift_zone[c], iptcstk, iptcoe+shift_coe[nd], nstep, nd);
 		   c=0;
 		   
 		}

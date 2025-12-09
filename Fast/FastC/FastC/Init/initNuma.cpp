@@ -51,8 +51,8 @@ PyObject* K_FASTC::initNuma(PyObject* self, PyObject* args)
   }
 
   FldArrayF* source; FldArrayF* target;
-  K_NUMPY::getFromNumpyArray(sourceArray, source, true); E_Float* iptsource = source->begin();
-  K_NUMPY::getFromNumpyArray(targetArray, target, true); E_Float* ipttarget = target->begin();
+  K_NUMPY::getFromNumpyArray(sourceArray, source); E_Float* iptsource = source->begin();
+  K_NUMPY::getFromNumpyArray(targetArray, target); E_Float* ipttarget = target->begin();
 
 
   vector<PyArrayObject*> hook;

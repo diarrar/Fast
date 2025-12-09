@@ -52,7 +52,7 @@ PyObject* K_FASTS::_stretch(PyObject* self, PyObject* args)
 
  FldArrayF* coordF;
  E_Float* ipt_coordF; 
- K_NUMPY::getFromNumpyArray(coord, coordF, true); ipt_coordF = coordF->begin();
+ K_NUMPY::getFromNumpyArray(coord, coordF); ipt_coordF = coordF->begin();
 
  
  // E_Float dx2 =0.0;

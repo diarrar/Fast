@@ -49,7 +49,7 @@ threadmax_sdm  = omp_get_max_threads();
 PyObject* tmp = PyDict_GetItemString(work, "MX_SYNCHRO"); E_Int mx_synchro    = PyLong_AsLong(tmp); 
 
 PyObject* dtlocArray  = PyDict_GetItemString(work,"dtloc"); FldArrayI* dtloc;
-K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc  = dtloc->begin();
+K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc  = dtloc->begin();
 E_Int nssiter = iptdtloc[0];
 E_Int ompmode  = iptdtloc[8];
 E_Int shift_omp= iptdtloc[11];
@@ -184,7 +184,7 @@ if( flag <10000 && flag >= 1000)
 
   // Tableau de travail verrou omp
   PyObject* lokArray = PyDict_GetItemString(work,"verrou_omp"); FldArrayI* lok;
-  K_NUMPY::getFromNumpyArray(lokArray, lok, true); E_Int* ipt_lok  = lok->begin();
+  K_NUMPY::getFromNumpyArray(lokArray, lok); E_Int* ipt_lok  = lok->begin();
 
 #pragma omp parallel default(shared)
   {

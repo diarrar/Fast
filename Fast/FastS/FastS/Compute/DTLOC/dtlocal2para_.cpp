@@ -77,7 +77,7 @@ PyObject* K_FASTS::dtlocal2para_(PyObject* self, PyObject* args)
 
  /// Recuperation du tableau de stockage des valeurs
   PyObject* dtlocArray = PyDict_GetItemString(work,"tab_dtloc"); FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(dtlocArray, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, stk); E_Float* iptstk = stk->begin();
 
   E_Int stk_size    = stk[0].getSize();
   E_Int taille_tabs = stk_size/5;
@@ -87,17 +87,17 @@ PyObject* K_FASTS::dtlocal2para_(PyObject* self, PyObject* args)
 
   /// Tableau de travail communs explicite/implicite
   PyObject* drodmArray = PyDict_GetItemString(work,"rhs"); FldArrayF* drodm;
-  K_NUMPY::getFromNumpyArray(drodmArray, drodm, true); E_Float* iptdrodm = drodm->begin();
+  K_NUMPY::getFromNumpyArray(drodmArray, drodm); E_Float* iptdrodm = drodm->begin();
   
   // Tableau de travail coe   ( dt/vol et diags LU)
   PyObject* coeArray = PyDict_GetItemString(work,"coe"); FldArrayF* coe;
-  K_NUMPY::getFromNumpyArray(coeArray, coe, true); E_Float* iptcoe = coe->begin();
+  K_NUMPY::getFromNumpyArray(coeArray, coe); E_Float* iptcoe = coe->begin();
 
   /*-------------------------------------*/
   /* Extraction tableau int et real      */
   /*-------------------------------------*/
   FldArrayI* param_int;
-  K_NUMPY::getFromNumpyArray(pyParam_int, param_int, true); E_Int* ipt_param_int = param_int->begin();
+  K_NUMPY::getFromNumpyArray(pyParam_int, param_int); E_Int* ipt_param_int = param_int->begin();
 
   ///// Les shifts pour les zones /////
 
@@ -108,24 +108,18 @@ PyObject* K_FASTS::dtlocal2para_(PyObject* self, PyObject* args)
   E_Int ech         = ipt_param_int[ NoTransfert +shift_graph];
   E_Int nrac        = ipt_param_int[ ech +1 ];
 
-  E_Int a=0;
-  E_Int b=0;
-  E_Int shift_zone[nidomR];
-  E_Int shift_coe [nidomR];
+  int64_t shift_zone[nidomR];
+  int64_t shift_coe[nidomR];
+  shift_zone[0]=0;
+  shift_coe[0] =0;
+  for (E_Int nd = 1; nd < nidomR; nd++)
+    {
+      shift_zone[nd] = shift_zone[nd-1] + param_intt[nd-1][ NDIMDX ]*param_intt[nd-1][ NEQ ];
+      shift_coe[nd ] = shift_coe[nd -1] + param_intt[nd-1][ NDIMDX ]*param_intt[nd-1][ NEQ_COE ];	 
+    }
 
-     for (E_Int nd = 0; nd < nidomR; nd++)
-       {
-	 shift_zone[nd]=a;
-	 a=a+param_intt[nd][ NDIMDX ]*param_intt[nd][ NEQ ];	 
-       }
-      for (E_Int nd = 0; nd < nidomR; nd++)
-       {
-	 shift_coe[nd]=b;
-	 b=b+param_intt[nd][ NDIMDX ]*param_intt[nd][ NEQ_COE ];	 
-       }
-
-      E_Int taille_stk       = taille_tabs*3/nrac;
-      E_Int taille_drodmstk  = taille_tabs/nrac;
+  E_Int taille_stk       = taille_tabs*3/nrac;
+  E_Int taille_drodmstk  = taille_tabs/nrac;
 
 
   vector<E_Int> nbraczone(nidomR,0);

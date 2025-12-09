@@ -75,16 +75,16 @@ PyObject* K_FASTS::recup3(PyObject* self, PyObject* args)
 
   /// Recuperation du tableau de stockage des valeurs
   FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(stock, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(stock, stk); E_Float* iptstk = stk->begin();
 
   /*-------------------------------------*/
   /* Extraction tableau int et real      */
   /*-------------------------------------*/
   FldArrayI* param_int;
-  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int, true);
+  E_Int res_donor = K_NUMPY::getFromNumpyArray(pyParam_int, param_int);
   E_Int* ipt_param_int = param_int->begin();
   FldArrayF* param_real;
-  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real, true);
+  res_donor = K_NUMPY::getFromNumpyArray(pyParam_real, param_real);
   E_Float* ipt_param_real = param_real->begin();
   
 

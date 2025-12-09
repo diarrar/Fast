@@ -74,7 +74,7 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 
 
   PyObject* dtlocArray  = PyDict_GetItemString(work,"dtloc"); FldArrayI* dtloc;
-  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc, true); E_Int* iptdtloc  = dtloc->begin();
+  K_NUMPY::getFromNumpyArray(dtlocArray, dtloc); E_Int* iptdtloc  = dtloc->begin();
   E_Int nssiter = iptdtloc[0];
   E_Int shift_omp= iptdtloc[11];
   E_Int* ipt_omp = iptdtloc + shift_omp;
@@ -105,11 +105,11 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
       pyParam_real_tc= PyDict_GetItemString(work,"param_real_tc");
 
       if (pyParam_int_tc != Py_None)
-	{ K_NUMPY::getFromNumpyArray(pyParam_int_tc , param_int_tc , true); ipt_param_int_tc = param_int_tc -> begin(); }
+	{ K_NUMPY::getFromNumpyArray(pyParam_int_tc , param_int_tc ); ipt_param_int_tc = param_int_tc -> begin(); }
       else{ ipt_param_int_tc = NULL;}
 
       if (pyParam_real_tc != Py_None)
-	{ K_NUMPY::getFromNumpyArray(pyParam_real_tc, param_real_tc, true); ipt_param_real_tc= param_real_tc-> begin(); }
+	{ K_NUMPY::getFromNumpyArray(pyParam_real_tc, param_real_tc); ipt_param_real_tc= param_real_tc-> begin(); }
       else{ ipt_param_real_tc = NULL; }
 
   if( layer_mode ==1)
@@ -117,17 +117,17 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 
       pyLinlets_int = PyDict_GetItemString(work,"linelets_int");
       if (pyLinlets_int != Py_None)
-	{K_NUMPY::getFromNumpyArray(pyLinlets_int, linelets_int, true); ipt_linelets_int = linelets_int->begin();}
+	{K_NUMPY::getFromNumpyArray(pyLinlets_int, linelets_int); ipt_linelets_int = linelets_int->begin();}
       else{ipt_linelets_int = NULL;}
 
       pyLinlets_real = PyDict_GetItemString(work,"linelets_real");
       if (pyLinlets_real != Py_None)
-	{K_NUMPY::getFromNumpyArray(pyLinlets_real, linelets_real, true); ipt_linelets_real = linelets_real->begin();}
+	{K_NUMPY::getFromNumpyArray(pyLinlets_real, linelets_real); ipt_linelets_real = linelets_real->begin();}
       else{ipt_linelets_real = NULL;}
 
 
       iskipArray = PyDict_GetItemString(work,"skip_lu");
-      K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu, true); ipt_iskip_lu = iskip_lu->begin();
+      K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu); ipt_iskip_lu = iskip_lu->begin();
 
       PyObject* tmp1 = PyDict_GetItemString(work,"lssiter_loc");
       if (PyLong_Check(tmp1) == true) lssiter_loc = PyLong_AsLong(tmp1);
@@ -505,12 +505,12 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 
   /// Tableau pour stockage senseur oscillation
   PyObject* wigArray = PyDict_GetItemString(work,"wiggle"); FldArrayF* wig;
-  K_NUMPY::getFromNumpyArray(wigArray, wig, true); E_Float* iptwig = wig->begin();
+  K_NUMPY::getFromNumpyArray(wigArray, wig); E_Float* iptwig = wig->begin();
 
 
   /// Tableau de travail communs explicite/implicite
   PyObject* drodmArray = PyDict_GetItemString(work,"rhs"); FldArrayF* drodm;
-  K_NUMPY::getFromNumpyArray(drodmArray, drodm, true); E_Float* iptdrodm = drodm->begin();
+  K_NUMPY::getFromNumpyArray(drodmArray, drodm); E_Float* iptdrodm = drodm->begin();
 
   iptdrodm_transfer[0]= iptdrodm;
   for (E_Int nd = 1; nd < nidom; nd++){ iptdrodm_transfer[nd]= iptdrodm_transfer[nd-1] + ipt_param_int[nd-1][NEQ]*ipt_param_int[nd-1][NDIMDX];}
@@ -518,45 +518,45 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 
   // LBM : tableau de stockage pour la distribution hors equilibre
   PyObject* drodm2Array = PyDict_GetItemString(work,"hors_eq"); FldArrayF* drodm2;
-  K_NUMPY::getFromNumpyArray(drodm2Array, drodm2, true); E_Float* f_horseq = drodm2->begin();
+  K_NUMPY::getFromNumpyArray(drodm2Array, drodm2); E_Float* f_horseq = drodm2->begin();
 
   // Tableaux de travail pour HRR O2
   PyObject* tab_a1prArray = PyDict_GetItemString(work,"a1_pr"); FldArrayF* tab_a1pr;
-  K_NUMPY::getFromNumpyArray(tab_a1prArray, tab_a1pr, true); E_Float* a1_pr = tab_a1pr->begin();
+  K_NUMPY::getFromNumpyArray(tab_a1prArray, tab_a1pr); E_Float* a1_pr = tab_a1pr->begin();
 
   PyObject* tab_a1fdArray = PyDict_GetItemString(work,"a1_fd"); FldArrayF* tab_a1fd;
-  K_NUMPY::getFromNumpyArray(tab_a1fdArray, tab_a1fd, true); E_Float* a1_fd = tab_a1fd->begin();
+  K_NUMPY::getFromNumpyArray(tab_a1fdArray, tab_a1fd); E_Float* a1_fd = tab_a1fd->begin();
 
   PyObject* tab_a1hrArray = PyDict_GetItemString(work,"a1_hr"); FldArrayF* tab_a1hr;
-  K_NUMPY::getFromNumpyArray(tab_a1hrArray, tab_a1hr, true); E_Float* a1_hrr = tab_a1hr->begin();
+  K_NUMPY::getFromNumpyArray(tab_a1hrArray, tab_a1hr); E_Float* a1_hrr = tab_a1hr->begin();
 
   // Tableau de travail pour HRR O3
   PyObject* tab_a3Array = PyDict_GetItemString(work,"aneq_3"); FldArrayF* tab_a3;
-  K_NUMPY::getFromNumpyArray(tab_a3Array, tab_a3, true); E_Float* aneq_o3 = tab_a3->begin();
+  K_NUMPY::getFromNumpyArray(tab_a3Array, tab_a3); E_Float* aneq_o3 = tab_a3->begin();
 
   PyObject* tab_psiArray  = PyDict_GetItemString(work,"psi_corr"); FldArrayF* tab_psi;
-  K_NUMPY::getFromNumpyArray(tab_psiArray, tab_psi, true); E_Float* psi_corr = tab_psi->begin();
+  K_NUMPY::getFromNumpyArray(tab_psiArray, tab_psi); E_Float* psi_corr = tab_psi->begin();
 
 
   // Tableau de travail coe   ( dt/vol et diags LU)
   PyObject* coeArray = PyDict_GetItemString(work,"coe"); FldArrayF* coe;
-  K_NUMPY::getFromNumpyArray(coeArray, coe, true); E_Float* iptcoe = coe->begin();
+  K_NUMPY::getFromNumpyArray(coeArray, coe); E_Float* iptcoe = coe->begin();
 
   // Tableau de travail coe   ( dt/vol et diags LU)
   PyObject* fluArray = PyDict_GetItemString(work,"flu_vecto"); FldArrayF* flu;
-  K_NUMPY::getFromNumpyArray(fluArray, flu, true); E_Float* iptflu = flu->begin();
+  K_NUMPY::getFromNumpyArray(fluArray, flu); E_Float* iptflu = flu->begin();
 
   // Tableau de travail gradient
   PyObject* gradArray = PyDict_GetItemString(work,"grad"); FldArrayF* grad;
-  K_NUMPY::getFromNumpyArray(gradArray, grad, true); E_Float* iptgrad = grad->begin();
+  K_NUMPY::getFromNumpyArray(gradArray, grad); E_Float* iptgrad = grad->begin();
 
   // Tableau de travail verrou omp
   PyObject* lokArray = PyDict_GetItemString(work,"verrou_omp"); FldArrayI* lok;
-  K_NUMPY::getFromNumpyArray(lokArray, lok, true); E_Int* ipt_lok  = lok->begin();
+  K_NUMPY::getFromNumpyArray(lokArray, lok); E_Int* ipt_lok  = lok->begin();
 
   // Tableau de travail timer omp
   PyObject*  timer_omp_Array= PyDict_GetItemString(work,"TIMER_OMP"); FldArrayF* tab_timer_omp;
-  K_NUMPY::getFromNumpyArray(timer_omp_Array, tab_timer_omp, true); E_Float* timer_omp = tab_timer_omp->begin();
+  K_NUMPY::getFromNumpyArray(timer_omp_Array, tab_timer_omp); E_Float* timer_omp = tab_timer_omp->begin();
 
 
  /// Recuperation du tableau de stockage dtloc
@@ -568,7 +568,7 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
   //if (ipt_param_int[0][ITYPCP]==2 and ipt_param_int[0][EXPLOC]==2 and ipt_param_int[0][RK]==3 and layer_mode ==1)
   {
     dtloc_stk = PyDict_GetItemString(work,"tab_dtloc");
-    K_NUMPY::getFromNumpyArray(dtloc_stk, stk, true);  iptstk = stk->begin();
+    K_NUMPY::getFromNumpyArray(dtloc_stk, stk);  iptstk = stk->begin();
 
     stk_size    = stk[0].getSize();
     taille_tabs = stk_size/5;

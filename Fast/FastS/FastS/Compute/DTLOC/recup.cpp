@@ -49,7 +49,7 @@ PyObject* K_FASTS::recup(PyObject* self, PyObject* args)
    
   /// Recuperation du tableau de stockage des valeurs
   FldArrayF* stk;
-  K_NUMPY::getFromNumpyArray(stock, stk, true); E_Float* iptstk = stk->begin();
+  K_NUMPY::getFromNumpyArray(stock, stk); E_Float* iptstk = stk->begin();
 
    
   /// Recuperation de param_int
