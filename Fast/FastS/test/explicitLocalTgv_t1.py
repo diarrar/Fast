@@ -94,24 +94,24 @@ t = Internal.addGhostCells(t, t, 2, adaptBCs=1, fillCorner=0)
 
 #Modif cellN coin pour eviter dependence cyclique
 for z in Internal.getZones(t):
-  cellN=  Internal.getNodeFromName(z,'cellN')[1]
-  cellN[:,:,0:2]=1
-  cellN[:,:,-2:]=1
-  if z[0]=='cart':
-    cellN[-2:  ,:,:]=0
-    cellN[-4:-2,0:2,:]=0
-    cellN[-4:-2,-2:,:]=0
-  if z[0]=='cart.0':
-    cellN[-2:,:,:]=0
-    cellN[-4:-2,0:2,:]=0
-    cellN[-4:-2,-2:,:]=0
-    cellN[0:2,  : ,  :]=0
-    cellN[2:4, 0:2,  :]=0
-    cellN[2:4, -2:,  :]=0
-  if z[0]=='cart.1':
-    cellN[0:2,:,:]=0
-    cellN[2:4,0:2,:]=0
-    cellN[2:4,-2:,:]=0
+    cellN=  Internal.getNodeFromName(z,'cellN')[1]
+    cellN[:,:,0:2]=1
+    cellN[:,:,-2:]=1
+    if z[0]=='cart':
+        cellN[-2:  ,:,:]=0
+        cellN[-4:-2,0:2,:]=0
+        cellN[-4:-2,-2:,:]=0
+    if z[0]=='cart.0':
+        cellN[-2:,:,:]=0
+        cellN[-4:-2,0:2,:]=0
+        cellN[-4:-2,-2:,:]=0
+        cellN[0:2,  : ,  :]=0
+        cellN[2:4, 0:2,  :]=0
+        cellN[2:4, -2:,  :]=0
+    if z[0]=='cart.1':
+        cellN[0:2,:,:]=0
+        cellN[2:4,0:2,:]=0
+        cellN[2:4,-2:,:]=0
 
 tc = C.node2Center(t)
 tc = X.setInterpData3(t, tc, nature=1, loc='centers', storage='inverse', sameName=1, method='lagrangian',dim=3)

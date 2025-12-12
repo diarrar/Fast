@@ -73,22 +73,22 @@ t = T.makeDirect(t)
 
 #Modif cellN coin pour eviter dependence cyclique
 for z in Internal.getZones(t):
-  cellN=  Internal.getNodeFromName(z,'cellN')[1]
-  if z[0]=='cart':
-    cellN[-2:  ,:]=0
-    cellN[-4:-2,0:2]=0
-    cellN[-4:-2,-2:]=0
-  if z[0]=='cart.0':
-    cellN[-2:,:]=0
-    cellN[-4:-2,0:2]=0
-    cellN[-4:-2,-2:]=0
-    cellN[0:2,  : ]=0
-    cellN[2:4, 0:2]=0
-    cellN[2:4, -2:]=0
-  if z[0]=='cart.1':
-    cellN[0:2,:]=0
-    cellN[2:4,0:2]=0
-    cellN[2:4,-2:]=0
+    cellN=  Internal.getNodeFromName(z,'cellN')[1]
+    if z[0]=='cart':
+        cellN[-2:  ,:]=0
+        cellN[-4:-2,0:2]=0
+        cellN[-4:-2,-2:]=0
+    if z[0]=='cart.0':
+        cellN[-2:,:]=0
+        cellN[-4:-2,0:2]=0
+        cellN[-4:-2,-2:]=0
+        cellN[0:2,  : ]=0
+        cellN[2:4, 0:2]=0
+        cellN[2:4, -2:]=0
+    if z[0]=='cart.1':
+        cellN[0:2,:]=0
+        cellN[2:4,0:2]=0
+        cellN[2:4,-2:]=0
 
 ### Construction du tc ###
 tc = C.node2Center(t)
@@ -122,11 +122,11 @@ FastC._setNum2Base(t, numb)
 
 zones = Internal.getNodesFromType2(t, 'Zone_t')
 for z in zones:
-   solcenter = Internal.getNodeFromName1(z, 'FlowSolution#Centers')
-   niveau = Internal.getNodeFromName(solcenter, 'niveaux_temps')[1][0][0][0]
-   dtloc = Internal.getNodeFromName1(z, '.Solver#define')  # noeud
-   level = Internal.getNodeFromName1(dtloc, 'niveaux_temps')  # noeud
-   Internal.setValue(level,int(niveau))
+    solcenter = Internal.getNodeFromName1(z, 'FlowSolution#Centers')
+    niveau = Internal.getNodeFromName(solcenter, 'niveaux_temps')[1][0][0][0]
+    dtloc = Internal.getNodeFromName1(z, '.Solver#define')  # noeud
+    level = Internal.getNodeFromName1(dtloc, 'niveaux_temps')  # noeud
+    Internal.setValue(level,int(niveau))
 
 FastC._attributeNoPassTransfer(tc)
 test.testT(tc, 2)

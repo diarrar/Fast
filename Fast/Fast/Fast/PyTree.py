@@ -5,7 +5,7 @@ import numpy
 
 import FastC.fastc
 import FastS.fasts
- 
+
 from . import fast
 
 from . import Fast
@@ -74,14 +74,14 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
             Lref= Internal.getValue(Internal.getNodeFromName(solverIBC, 'Lref'))
             # compute info linelets
             if Re > 0: #Adaptive method
-              h0, hn, nbpts_linelets = FastS.computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+                h0, hn, nbpts_linelets = FastS.computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
             elif Re == 0:
-              h0, hn, nbpts_linelets = FastS.computeLineletsInfo2(tc, q=1.1)
+                h0, hn, nbpts_linelets = FastS.computeLineletsInfo2(tc, q=1.1)
             else: #Alferez' og method
-              h0, nbpts_linelets = 1.e-6, 45
+                h0, nbpts_linelets = 1.e-6, 45
 
     #bidouille atroce. pourquoi ne pas passer le parametre dans NumBase ou numzone???
-    first = Internal.getNodeFromName1(t, 'NbptsLinelets') 
+    first = Internal.getNodeFromName1(t, 'NbptsLinelets')
     if first is None: Internal.createUniqueChild(t, 'NbptsLinelets', 'DataArray_t', value=nbpts_linelets)
 
 
@@ -257,57 +257,57 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     if tc is not None:
         # Add linelets arrays in the FastC.HOOK for ODE-based WallModel (IBC)
         if solverIBC is not None:
-          if Re > 0: #Adaptive method
-              # h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
-              FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-              FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-          elif Re == 0:
-              # h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
-              FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-              FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-          else: #Alferez' og method
-              # h0, nbpts_linelets = 1.e-6, 45
-              FastS._createTBLESA(tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
-              FastS._createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+            if Re > 0: #Adaptive method
+                # h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+                FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+                FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            elif Re == 0:
+                # h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
+                FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+                FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            else: #Alferez' og method
+                # h0, nbpts_linelets = 1.e-6, 45
+                FastS._createTBLESA(tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+                FastS._createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
 
         Nbpass = 1
         for z in Internal.getZones(tc):
-          subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-          for s in subRegions:
-            if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2  
-            elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3  
-            elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4  
-            elif s[0][-6:]== '_pass5' and Nbpass<=4: Nbpass=5  
-            elif s[0][-6:]== '_pass6' and Nbpass<=5: Nbpass=6  
-            elif s[0][-6:]== '_pass7' and Nbpass<=6: Nbpass=7  
-            elif s[0][-6:]== '_pass8' and Nbpass<=7: Nbpass=8  
-            elif s[0][-6:]== '_pass9' and Nbpass<=8: Nbpass=9  
-            elif s[0][-7:]== '_pass10' and Nbpass<=9: Nbpass=10 
-           
+            subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+            for s in subRegions:
+                if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2
+                elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3
+                elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4
+                elif s[0][-6:]== '_pass5' and Nbpass<=4: Nbpass=5
+                elif s[0][-6:]== '_pass6' and Nbpass<=5: Nbpass=6
+                elif s[0][-6:]== '_pass7' and Nbpass<=6: Nbpass=7
+                elif s[0][-6:]== '_pass8' and Nbpass<=7: Nbpass=8
+                elif s[0][-6:]== '_pass9' and Nbpass<=8: Nbpass=9
+                elif s[0][-7:]== '_pass10' and Nbpass<=9: Nbpass=10
+
         #test pour savoir si graph est une liste de dictionnaires (explicite local)
         #ou juste un dictionnaire (explicite global, implicite)
         if isinstance(graph, list): graphLoc=graph[0]
         else: graphLoc=graph
 
         for nOpass in range(1,Nbpass+1):
-          if (Nbpass==1): FilterPass=None
-          else:           FilterPass='pass'+str(nOpass)
+            if (Nbpass==1): FilterPass=None
+            else:           FilterPass='pass'+str(nOpass)
 
-          if graphLoc is None:
-            graphpassLoc =None
-            procDictLoc  =None
-          else:
-            graphpassLoc = graphLoc['graphPass'+str(nOpass)] 
-            procDictLoc  = graphLoc['procDict']
-          PACK.miseAPlatDonorTree__(t, tc, graph=graphpassLoc, procDict=procDictLoc, nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
+            if graphLoc is None:
+                graphpassLoc =None
+                procDictLoc  =None
+            else:
+                graphpassLoc = graphLoc['graphPass'+str(nOpass)]
+                procDictLoc  = graphLoc['procDict']
+            PACK.miseAPlatDonorTree__(t, tc, graph=graphpassLoc, procDict=procDictLoc, nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
 
-          tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
-          key = 'param_int_tc'+str(nOpass)
-          FastC_Py.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
-          param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
-          key = 'param_real_tc'+str(nOpass)
-          if param_real_tc is not None: FastC_Py.HOOK[key] = param_real_tc[1]
-          else: FastC_Py.HOOK[key] = None
+            tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
+            key = 'param_int_tc'+str(nOpass)
+            FastC_Py.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
+            param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
+            key = 'param_real_tc'+str(nOpass)
+            if param_real_tc is not None: FastC_Py.HOOK[key] = param_real_tc[1]
+            else: FastC_Py.HOOK[key] = None
 
     else:
         Nbpass=0
@@ -564,12 +564,12 @@ def _fillGhostcells(zones, tc, infos_zones, timelevel_target, vars, nstep, ompmo
                 nstep_loc = nstep
                 if nstep==0: nstep_loc=1
                 for npass in range(dtloc[12]):
-                   passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass+1))
-                   param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
-                   param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+                    passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass+1))
+                    param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
+                    param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
 
-                   print('Nopass', npass+1, vars)
-                   FastC.fastc.___setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, varType, no_transfert, nstep_loc, nitmax, rk, exploc, num_passage)
+                    print('Nopass', npass+1, vars)
+                    FastC.fastc.___setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, varType, no_transfert, nstep_loc, nitmax, rk, exploc, num_passage)
 
                 #if couplageNSLBM==1 and nstep !=0 : fast.recuplbmns_(zones, zonesD, param_int, param_real, hook1, nitmax, 0, nstep_loc, ompmode, 1, 0)
 

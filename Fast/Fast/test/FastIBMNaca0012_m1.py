@@ -104,7 +104,7 @@ Internal._rmNodesByName(tc, '.Solver#ownData')
 for z in Internal.getZones(tc):
     subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
     for s in subRegions:
-      s[0]=s[0][0:-6]
+        s[0]=s[0][0:-6]
 
 if Cmpi.rank==0:
     test.testT(t , 3)

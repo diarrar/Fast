@@ -3680,11 +3680,11 @@ def loadTree(fileName='t.cgns', split='single', graph=False, exploc=0):
             if graph:
                 Nbpass = 1
                 for z in Internal.getZones(t):
-                   subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-                   for s in subRegions:
-                     if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2  
-                     elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3  
-                     elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4  
+                    subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+                    for s in subRegions:
+                        if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2
+                        elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3
+                        elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4
 
                 #Nbpass = Cmpi.allreduce(Nbpass, op=MAX)
                 graphN = prepGraphs(t, exploc=exploc, Nbpass=Nbpass)
@@ -4345,95 +4345,95 @@ def prepGraphs(t, exploc=0, Nbpass=1):
     zones    = Internal.getZones(t)
     procDict = D2.getProcDict(t)
     if not exploc:
-       graphList=[]
-       for i in range(1,Nbpass+1):
-          graph ={} 
-          for z in zones:
-            proc = D1.getProcLocal__(z, procDict)
-            subRegions = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
-            for s in subRegions:
-                donor = Internal.getValue(s)
-                idn = Internal.getNodesFromName1(s,'InterpolantsDonor')
-                if idn != []: # la subRegion decrit des interpolations/IBC
-                    popp = D1.getProcGlobal__(donor, t, procDict)
-                    if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
-                      D1.updateGraph__(graph, proc, popp, z[0])
-          newList = graph.copy()
-          graphList.append(newList)
-    else:
-      maxlevel=1
-      for z in zones:
-         subRegions2 = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
-         for s in subRegions2:
-             levrcv_ = Internal.getNodesFromName1(s,'LevelZRcv')
-             levrcv  = int(levrcv_[0][1][0])
-             levdnr_ = Internal.getNodesFromName1(s,'LevelZDnr')
-             levdnr  = int(levdnr_[0][1][0])
-             maximum = max(levrcv,levdnr)
-             if maximum > maxlevel:maxlevel=maximum
-      nssiter = 4*maxlevel
-
-      list_graph_=[]
-      #for ssiter in range(3,4):
-      for ssiter in range(1,2*nssiter+1):
         graphList=[]
         for i in range(1,Nbpass+1):
-          graph = {}
-          for z in zones:
-            proc = D1.getProcLocal__(z, procDict)
-            subRegions = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
-            for s in subRegions:
-              donor = Internal.getValue(s)
-              idn = Internal.getNodesFromName1(s,'InterpolantsDonor')
-              if idn != []: # la subRegion decrit des interpolations
+            graph ={}
+            for z in zones:
+                proc = D1.getProcLocal__(z, procDict)
+                subRegions = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
+                for s in subRegions:
+                    donor = Internal.getValue(s)
+                    idn = Internal.getNodesFromName1(s,'InterpolantsDonor')
+                    if idn != []: # la subRegion decrit des interpolations/IBC
+                        popp = D1.getProcGlobal__(donor, t, procDict)
+                        if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
+                            D1.updateGraph__(graph, proc, popp, z[0])
+            newList = graph.copy()
+            graphList.append(newList)
+    else:
+        maxlevel=1
+        for z in zones:
+            subRegions2 = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
+            for s in subRegions2:
+                levrcv_ = Internal.getNodesFromName1(s,'LevelZRcv')
+                levrcv  = int(levrcv_[0][1][0])
+                levdnr_ = Internal.getNodesFromName1(s,'LevelZDnr')
+                levdnr  = int(levdnr_[0][1][0])
+                maximum = max(levrcv,levdnr)
+                if maximum > maxlevel:maxlevel=maximum
+        nssiter = 4*maxlevel
 
-                  levdnr_ = Internal.getNodesFromName1(s,'LevelZDnr')
-                  levdnr  = int(levdnr_[0][1][0])
-                  levrcv_ = Internal.getNodesFromName1(s,'LevelZRcv')
-                  levrcv  = int(levrcv_[0][1][0])
-                  cycl = nssiter//levdnr
-                  popp = D1.getProcGlobal__(donor, t, procDict)
+        list_graph_=[]
+        #for ssiter in range(3,4):
+        for ssiter in range(1,2*nssiter+1):
+            graphList=[]
+            for i in range(1,Nbpass+1):
+                graph = {}
+                for z in zones:
+                    proc = D1.getProcLocal__(z, procDict)
+                    subRegions = Internal.getNodesFromType1(z,'ZoneSubRegion_t')
+                    for s in subRegions:
+                        donor = Internal.getValue(s)
+                        idn = Internal.getNodesFromName1(s,'InterpolantsDonor')
+                        if idn != []: # la subRegion decrit des interpolations
 
-                  if levdnr > levrcv and ssiter <= nssiter:
-                    if ssiter%cycl==cycl-1 or ssiter%cycl==cycl//2 and (ssiter//cycl)%2==1:
-                      if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
-                         D1.updateGraph__(graph, proc, popp, z[0])
-                  if levdnr < levrcv and ssiter <= nssiter:
-                    if (ssiter%cycl==1 or ssiter%cycl==cycl//4 or ssiter%cycl==cycl//2-1 or ssiter%cycl==cycl//2+1 or ssiter%cycl==cycl//2+cycl//4 or ssiter%cycl==cycl-1):
-                      if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
-                         D1.updateGraph__(graph, proc, popp, z[0])
-                  if levdnr == levrcv and ssiter <= nssiter:
-                    if (ssiter%cycl==cycl//2-1 or (ssiter%cycl==cycl//2 and (ssiter//cycl)%2==0) or ssiter%cycl==cycl-1):
-                      if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
-                         D1.updateGraph__(graph, proc, popp, z[0])
-                  if levdnr == levrcv and ssiter > nssiter:
-                    ssiter_ = ssiter - nssiter
-                    if ssiter_%cycl==cycl//2 and (ssiter_//cycl)%2==1:
-                      if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
-                         D1.updateGraph__(graph, proc, popp, z[0])
+                            levdnr_ = Internal.getNodesFromName1(s,'LevelZDnr')
+                            levdnr  = int(levdnr_[0][1][0])
+                            levrcv_ = Internal.getNodesFromName1(s,'LevelZRcv')
+                            levrcv  = int(levrcv_[0][1][0])
+                            cycl = nssiter//levdnr
+                            popp = D1.getProcGlobal__(donor, t, procDict)
 
-          newList = graph.copy()
-          graphList.append(newList)
+                            if levdnr > levrcv and ssiter <= nssiter:
+                                if ssiter%cycl==cycl-1 or ssiter%cycl==cycl//2 and (ssiter//cycl)%2==1:
+                                    if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
+                                        D1.updateGraph__(graph, proc, popp, z[0])
+                            if levdnr < levrcv and ssiter <= nssiter:
+                                if (ssiter%cycl==1 or ssiter%cycl==cycl//4 or ssiter%cycl==cycl//2-1 or ssiter%cycl==cycl//2+1 or ssiter%cycl==cycl//2+cycl//4 or ssiter%cycl==cycl-1):
+                                    if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
+                                        D1.updateGraph__(graph, proc, popp, z[0])
+                            if levdnr == levrcv and ssiter <= nssiter:
+                                if (ssiter%cycl==cycl//2-1 or (ssiter%cycl==cycl//2 and (ssiter//cycl)%2==0) or ssiter%cycl==cycl-1):
+                                    if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
+                                        D1.updateGraph__(graph, proc, popp, z[0])
+                            if levdnr == levrcv and ssiter > nssiter:
+                                ssiter_ = ssiter - nssiter
+                                if ssiter_%cycl==cycl//2 and (ssiter_//cycl)%2==1:
+                                    if Nbpass==1 or s[0][-6:]== '_pass'+str(i):
+                                        D1.updateGraph__(graph, proc, popp, z[0])
 
-        newiter = graphList.copy()
-        list_graph_.append(newiter)
+                newList = graph.copy()
+                graphList.append(newList)
+
+            newiter = graphList.copy()
+            list_graph_.append(newiter)
 
     if exploc == 0:
-       graphN={}
-       for i in range(Nbpass):
-          graphN['graphPass'+str(i+1)]=graphList[i]
-       graphN['procDict']=procDict
+        graphN={}
+        for i in range(Nbpass):
+            graphN['graphPass'+str(i+1)]=graphList[i]
+        graphN['procDict']=procDict
     else:
-      list_graph= []
-      if list_graph_ is not None:
-         for g in list_graph_:
-            graphN={}
-            for i in range(Nbpass):
-               graphN['graphPass'+str(i+1)]=g[i]
-            graphN['procDict']=procDict
-            newGraph = graphN.copy()
-            list_graph.append(newGraph)
-         graphN = list_graph
+        list_graph= []
+        if list_graph_ is not None:
+            for g in list_graph_:
+                graphN={}
+                for i in range(Nbpass):
+                    graphN['graphPass'+str(i+1)]=g[i]
+                graphN['procDict']=procDict
+                newGraph = graphN.copy()
+                list_graph.append(newGraph)
+            graphN = list_graph
     return graphN
 
 
@@ -5033,25 +5033,25 @@ def _buildConservativeFlux(t, tc, verbose=0):
 ## determine Nopass transfert en fonction dependance donneur/recepteur
 def _attributeNoPassTransfer(tc, graph=None, npassMax=9, cutoff=1.e-7, verbose=0):
 
-  zones= Internal.getZones(tc)
-  nzones=len(zones)
-  dimZones={}
-  dicZones={}
+    zones= Internal.getZones(tc)
+    nzones=len(zones)
+    dimZones={}
+    dicZones={}
 
-  #zoneFilter={}
-  #for z in zones: zoneFilter[z[0]]=False
+    #zoneFilter={}
+    #for z in zones: zoneFilter[z[0]]=False
 
-  count_rac=0
-  dim = 3
-  for z in zones:
-    dimR          = Internal.getZoneDim(z)
-    dicZones[z[0]]= z
-    dimZones[z[0]]= dimR
-    if dimR[3]==1: dim= 2
-    subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-    for s in subRegions:
-      count_rac+=1
-    '''
+    count_rac=0
+    dim = 3
+    for z in zones:
+        dimR          = Internal.getZoneDim(z)
+        dicZones[z[0]]= z
+        dimZones[z[0]]= dimR
+        if dimR[3]==1: dim= 2
+        subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+        for s in subRegions:
+            count_rac+=1
+        '''
       if s[0][0:4]=='IBCD':
          zRname = Internal.getValue(s)
          zoneFilter[z[0]]=True
@@ -5059,278 +5059,278 @@ def _attributeNoPassTransfer(tc, graph=None, npassMax=9, cutoff=1.e-7, verbose=0
          #print("zone filtrer", z[0], zRname, zoneFilter[zRname])
     '''
 
-  datas = {}
+    datas = {}
 
-  graphLoc=None
-  if graph is not None:
-    graphLoc = graph['graphPass1']
-    procDict = graph['procDict']
+    graphLoc=None
+    if graph is not None:
+        graphLoc = graph['graphPass1']
+        procDict = graph['procDict']
 
-  npass=1
-  lgo=True
-  while lgo:
-    C._initVars(tc, 'colorR', 0.)
-    #C._initVars(tc, '{colorD}= 0')
+    npass=1
+    lgo=True
+    while lgo:
+        C._initVars(tc, 'colorR', 0.)
+        #C._initVars(tc, '{colorD}= 0')
 
-    # force vide par defaut car graph construit sur l'ensemble raccord. Evite souci pass>=2
-    for i in range(Cmpi.size): datas[i] = []
-                                             
-    count=0
-    for z in zones:
-       if verbose==1: print("flag"+str(npass)+':', count/float(nzones)*100, '%',flush=True)
-       subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-       for s in subRegions:
-          #on filtre les raccord par passe
-          if npass==1  or 'pass'+str(npass) in s[0]:
-             zRname     = Internal.getValue(s)
-             proc=0
-             if Cmpi.size > 1 :  proc = procDict[zRname]
-             pointlistD = Internal.getNodeFromName1(s , 'PointListDonor')[1]
-             if proc == Cmpi.rank:
-               zr_c      = dicZones[zRname]
-               sol       = Internal.getNodeFromName1(zr_c,'FlowSolution')
-               colorR    = Internal.getNodeFromName1(sol, 'colorR')[1]
-               dimR      = dimZones[zRname]
-               nxnyR     = dimR[1]*dimR[2]; nxR = dimR[1]
+        # force vide par defaut car graph construit sur l'ensemble raccord. Evite souci pass>=2
+        for i in range(Cmpi.size): datas[i] = []
 
-               if dim==3:
-                 for l in range(numpy.size(pointlistD)):
-                   kR    = pointlistD[l]//nxnyR
-                   rest = pointlistD[l]-kR*nxnyR
-                   jR    = rest//nxR
-                   iR    = rest -jR*nxR
-                   #if zRname=='Cart.1X0' and npass==2: print('zD', z[0], s[0], iR,jR,kR)
-                   colorR[iR,jR,kR]=1
-               else:
-                 for l in range(numpy.size(pointlistD)):
-                   jR    = pointlistD[l]//nxR
-                   iR    = pointlistD[l] -jR*nxR
-                   #if zRname=='Cart.1X0' and npass==2: print('zD', z[0], s[0], iR,jR,kR)
-                   #print('zD', z[0], s[0], iR,jR, numpy.shape(colorR), flush=True )
-                   colorR[iR,jR]=1
-             else:
-               if proc not in datas: datas[proc] = [[zRname, pointlistD]]
-               else: datas[proc] += [[zRname, pointlistD]]
-       count+=1
+        count=0
+        for z in zones:
+            if verbose==1: print("flag"+str(npass)+':', count/float(nzones)*100, '%',flush=True)
+            subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+            for s in subRegions:
+                #on filtre les raccord par passe
+                if npass==1  or 'pass'+str(npass) in s[0]:
+                    zRname     = Internal.getValue(s)
+                    proc=0
+                    if Cmpi.size > 1 :  proc = procDict[zRname]
+                    pointlistD = Internal.getNodeFromName1(s , 'PointListDonor')[1]
+                    if proc == Cmpi.rank:
+                        zr_c      = dicZones[zRname]
+                        sol       = Internal.getNodeFromName1(zr_c,'FlowSolution')
+                        colorR    = Internal.getNodeFromName1(sol, 'colorR')[1]
+                        dimR      = dimZones[zRname]
+                        nxnyR     = dimR[1]*dimR[2]; nxR = dimR[1]
 
-    if Cmpi.size > 1:
-       # Envoie des numpys suivant le graph
-       rcvDatas = Cmpi.sendRecv(datas, graphLoc)
+                        if dim==3:
+                            for l in range(numpy.size(pointlistD)):
+                                kR    = pointlistD[l]//nxnyR
+                                rest = pointlistD[l]-kR*nxnyR
+                                jR    = rest//nxR
+                                iR    = rest -jR*nxR
+                                #if zRname=='Cart.1X0' and npass==2: print('zD', z[0], s[0], iR,jR,kR)
+                                colorR[iR,jR,kR]=1
+                        else:
+                            for l in range(numpy.size(pointlistD)):
+                                jR    = pointlistD[l]//nxR
+                                iR    = pointlistD[l] -jR*nxR
+                                #if zRname=='Cart.1X0' and npass==2: print('zD', z[0], s[0], iR,jR,kR)
+                                #print('zD', z[0], s[0], iR,jR, numpy.shape(colorR), flush=True )
+                                colorR[iR,jR]=1
+                    else:
+                        if proc not in datas: datas[proc] = [[zRname, pointlistD]]
+                        else: datas[proc] += [[zRname, pointlistD]]
+            count+=1
 
-       # Remise des champs interpoles dans l'arbre receveur
-       for i in rcvDatas:
-           #print(rank, 'recoit de',i, '->', len(rcvDatas[i]), flush=True)
-           for n in rcvDatas[i]:
-              zRname    = n[0]
-              pointlistD = n[1]
-              zr_c      = dicZones[zRname]
-              #print('reception', Cmpi.rank, zRname, zr_c[0],  flush=True)
-              sol       = Internal.getNodeFromName1(zr_c,'FlowSolution')
-              colorR    = Internal.getNodeFromName1(sol, 'colorR')[1]
-              dimR      = dimZones[zRname]
-              nxnyR     = dimR[1]*dimR[2]; nxR = dimR[1]
-              if dim==3:
-                for l in range(numpy.size(pointlistD)):
-                  kR    = pointlistD[l]//nxnyR
-                  rest = pointlistD[l]-kR*nxnyR
-                  jR    = rest//nxR
-                  iR    = rest -jR*nxR
-                  colorR[iR,jR,kR]=1
-              else:
-                for l in range(numpy.size(pointlistD)):
-                  jR    = pointlistD[l]//nxR
-                  iR    = pointlistD[l] -jR*nxR
-                  #print('Rank', Cmpi.rank, 'IJ:', iR,jR, 'sh:',numpy.shape(colorR), flush=True)
-                  colorR[iR,jR]=1
+        if Cmpi.size > 1:
+            # Envoie des numpys suivant le graph
+            rcvDatas = Cmpi.sendRecv(datas, graphLoc)
 
-    lstop=False
-    c1=0;c2=0; czone=0
-    for z in Internal.getZones(tc):
-      sol    = Internal.getNodeFromName1(z,'FlowSolution')
-      colorR = Internal.getNodeFromName1(sol, "colorR")[1]
-      #colorD = Internal.getNodeFromName1(sol, "colorD")[1]
-      subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-      if verbose==1: print("search: zD=", z[0],", ", czone/float(nzones)*100,'%, nb racc pass'+str(npass)+':', c1, flush=True)
-      czone+=1
-      for s in subRegions:
-          zRname = Internal.getValue(s)
-          #if ( npass==1 and ('IBCD' in s[0] or (zoneFilter[z[0]]==False and zoneFilter[zRname]==False) ) ) or 'pass'+str(npass) in s[0]:
-          #if (npass==1 and 'IBCD' in s[0]) or 'pass'+str(npass) in s[0]:
-          if npass==1 or 'pass'+str(npass) in s[0]:
-            count =0
- 
-            modifType=0
-            dimD = Internal.getZoneDim(z)
-            nxnyD = dimD[1]*dimD[2]
-            nxD   = dimD[1]
+            # Remise des champs interpoles dans l'arbre receveur
+            for i in rcvDatas:
+                #print(rank, 'recoit de',i, '->', len(rcvDatas[i]), flush=True)
+                for n in rcvDatas[i]:
+                    zRname    = n[0]
+                    pointlistD = n[1]
+                    zr_c      = dicZones[zRname]
+                    #print('reception', Cmpi.rank, zRname, zr_c[0],  flush=True)
+                    sol       = Internal.getNodeFromName1(zr_c,'FlowSolution')
+                    colorR    = Internal.getNodeFromName1(sol, 'colorR')[1]
+                    dimR      = dimZones[zRname]
+                    nxnyR     = dimR[1]*dimR[2]; nxR = dimR[1]
+                    if dim==3:
+                        for l in range(numpy.size(pointlistD)):
+                            kR    = pointlistD[l]//nxnyR
+                            rest = pointlistD[l]-kR*nxnyR
+                            jR    = rest//nxR
+                            iR    = rest -jR*nxR
+                            colorR[iR,jR,kR]=1
+                    else:
+                        for l in range(numpy.size(pointlistD)):
+                            jR    = pointlistD[l]//nxR
+                            iR    = pointlistD[l] -jR*nxR
+                            #print('Rank', Cmpi.rank, 'IJ:', iR,jR, 'sh:',numpy.shape(colorR), flush=True)
+                            colorR[iR,jR]=1
 
-            pointlist  = Internal.getNodeFromName1(s, 'PointList')[1]
-            pointlistD = Internal.getNodeFromName1(s, 'PointListDonor')[1]
-            Interptype = Internal.getNodeFromName1(s, 'InterpolantsType')[1]
-            coeff      = Internal.getNodeFromName1(s, 'InterpolantsDonor')[1]
+        lstop=False
+        c1=0;c2=0; czone=0
+        for z in Internal.getZones(tc):
+            sol    = Internal.getNodeFromName1(z,'FlowSolution')
+            colorR = Internal.getNodeFromName1(sol, "colorR")[1]
+            #colorD = Internal.getNodeFromName1(sol, "colorD")[1]
+            subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+            if verbose==1: print("search: zD=", z[0],", ", czone/float(nzones)*100,'%, nb racc pass'+str(npass)+':', c1, flush=True)
+            czone+=1
+            for s in subRegions:
+                zRname = Internal.getValue(s)
+                #if ( npass==1 and ('IBCD' in s[0] or (zoneFilter[z[0]]==False and zoneFilter[zRname]==False) ) ) or 'pass'+str(npass) in s[0]:
+                #if (npass==1 and 'IBCD' in s[0]) or 'pass'+str(npass) in s[0]:
+                if npass==1 or 'pass'+str(npass) in s[0]:
+                    count =0
 
-            '''
+                    modifType=0
+                    dimD = Internal.getZoneDim(z)
+                    nxnyD = dimD[1]*dimD[2]
+                    nxD   = dimD[1]
+
+                    pointlist  = Internal.getNodeFromName1(s, 'PointList')[1]
+                    pointlistD = Internal.getNodeFromName1(s, 'PointListDonor')[1]
+                    Interptype = Internal.getNodeFromName1(s, 'InterpolantsType')[1]
+                    coeff      = Internal.getNodeFromName1(s, 'InterpolantsDonor')[1]
+
+                    '''
             dimR = dimZones[zRname]
             nxnyR = dimR[1]*dimR[2]
             nxR   = dimR[1]
             '''
-            npass_loc =1
-            #Flag donor
-            for l in range(numpy.size(pointlist)):
-        
-              kD    = pointlist[l]//nxnyD
-              rest = pointlist[l]-kD*nxnyD
-              jD    = rest//nxD
-              iD    = rest -jD*nxD
+                    npass_loc =1
+                    #Flag donor
+                    for l in range(numpy.size(pointlist)):
 
-              #kR    = pointlistD[l]//nxnyR
-              #rest = pointlistD[l]-kR*nxnyR
-              #jR    = rest//nxR
-              #iR    = rest -jR*nxR
+                        kD    = pointlist[l]//nxnyD
+                        rest = pointlist[l]-kD*nxnyD
+                        jD    = rest//nxD
+                        iD    = rest -jD*nxD
 
-              if dim==2: critere= colorR[iD,jD]
-              else: critere= colorR[iD,jD,kD]
-              if Interptype[l]==1: 
-                if critere >=0.1: 
-                   #colorD[iD,jD,kD]=1
-                   npass_loc=2
-                   #if npass==1 and zRname=='Cart.247X0' and z[0]=='Cart.247X0':
-                   #  print("argh zDR T1", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR,'dimD', dimD[1:4],'dimR', dimR[1:4], s[0] ) 
-                   #  stop
-                count +=1
+                        #kR    = pointlistD[l]//nxnyR
+                        #rest = pointlistD[l]-kR*nxnyR
+                        #jR    = rest//nxR
+                        #iR    = rest -jR*nxR
 
-              elif Interptype[l]==2: 
-                count_loc=0
-                for kk in range(2):
-                  for jj in range(2):
-                    for ii in range(2):
-                      if colorR[iD +ii ,jD +jj, kD+ kk]>=0.1: 
-                        if abs(coeff[count +count_loc]) > cutoff:
-                          #colorD[iD +ii ,jD +jj, kD+ kk]=1
-                          #if npass==1 and zRname=='Cart.247X0' and z[0]=='Cart.247X0': 
-                          #    print("argh zDR T2", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4], s[0], 'coef', coeff[count +count_loc],  pointlistD[l], l)
-                          #    lstop= True
-                          #if npass>=3: print("argh zDR T2", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  ) 
-                          npass_loc=2
+                        if dim==2: critere= colorR[iD,jD]
+                        else: critere= colorR[iD,jD,kD]
+                        if Interptype[l]==1:
+                            if critere >=0.1:
+                                #colorD[iD,jD,kD]=1
+                                npass_loc=2
+                                #if npass==1 and zRname=='Cart.247X0' and z[0]=='Cart.247X0':
+                                #  print("argh zDR T1", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR,'dimD', dimD[1:4],'dimR', dimR[1:4], s[0] )
+                                #  stop
+                            count +=1
+
+                        elif Interptype[l]==2:
+                            count_loc=0
+                            for kk in range(2):
+                                for jj in range(2):
+                                    for ii in range(2):
+                                        if colorR[iD +ii ,jD +jj, kD+ kk]>=0.1:
+                                            if abs(coeff[count +count_loc]) > cutoff:
+                                                #colorD[iD +ii ,jD +jj, kD+ kk]=1
+                                                #if npass==1 and zRname=='Cart.247X0' and z[0]=='Cart.247X0':
+                                                #    print("argh zDR T2", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4], s[0], 'coef', coeff[count +count_loc],  pointlistD[l], l)
+                                                #    lstop= True
+                                                #if npass>=3: print("argh zDR T2", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  )
+                                                npass_loc=2
+                                            else:
+                                                #Interptype[l]=-2
+                                                modifType=1
+                                                #print("argh zDR", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  )
+                                        count_loc+=1
+                            #if lstop: stop
+
+                            count+=8
+
+                        elif Interptype[l]==44:
+
+                            for kk in range(4):
+                                for jj in range(4):
+                                    for ii in range(4):
+                                        if colorR[iD +ii, jD +jj, kD +kk]>=0.1:
+                                            val = coeff[count +ii ] * coeff[count +jj + 4 ] * coeff[count +kk +8 ]
+                                            if abs(val) > cutoff:
+                                                #colorD[iD +ii ,jD +jj, kD+ kk]=1
+                                                #if npass>=3: print("argh zDR T4", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  )
+                                                npass_loc=2
+                                            else:
+                                                #Interptype[l]=-44
+                                                modifType=1
+                            count+=12
+
+                        elif Interptype[l]==22:
+
+                            count_loc=0
+                            for jj in range(2):
+                                for ii in range(2):
+                                    if colorR[iD +ii ,jD +jj]>=0.1:
+                                        if abs(coeff[count +count_loc]) > cutoff:
+                                            #colorD[iD +ii ,jD +jj, kD]=1
+                                            npass_loc=2
+                                        else:
+                                            modifType=1
+                                            #Interptype[l]=-22
+                                    count_loc+=1
+                            count+=4
+
+                        #if npass_loc ==2: break
+
+                    if npass_loc ==2:
+
+                        #on reinitialise le type a une valeur positive, si raccord pas traité a l'etape courante
+                        #if modifType==1:
+                        #  for l in range(numpy.size(pointlist)):
+                        #     if Interptype[l] < 0: Interptype[l] *=-1
+
+                        c2+=1
+                        if npass==1:
+                            s[0]=s[0]+'_pass'+str(npass+1)
                         else:
-                          #Interptype[l]=-2
-                          modifType=1
-                          #print("argh zDR", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  ) 
-                      count_loc+=1
-                #if lstop: stop
+                            sz=len(s[0])
+                            shift=6
+                            if npass>=10: shift=7
+                            s[0]=s[0][0:sz-shift]+'_pass'+str(npass+1)
+                            #s[0][sz-1]=str(npass+1)
+                    else:
+                        c1+=1
+                        if npass==1: s[0]=s[0]+'_pass'+str(npass)
 
-                count+=8
+                        if modifType==1:
 
-              elif Interptype[l]==44: 
+                            count =0
+                            for l in range(numpy.size(pointlist)):
 
-                for kk in range(4):
-                  for jj in range(4):
-                    for ii in range(4):
-                      if colorR[iD +ii, jD +jj, kD +kk]>=0.1: 
-                        val = coeff[count +ii ] * coeff[count +jj + 4 ] * coeff[count +kk +8 ]
-                        if abs(val) > cutoff:
-                          #colorD[iD +ii ,jD +jj, kD+ kk]=1
-                          #if npass>=3: print("argh zDR T4", z[0], zRname, 'ijkD', iD,jD,kD, 'ijkR', iR,jR,kR, 'iijjkk',ii,jj,kk, 'dimD', dimD[1:4],'dimR', dimR[1:4]  ) 
-                          npass_loc=2
-                        else:
-                          #Interptype[l]=-44
-                          modifType=1
-                count+=12
+                                kD    = pointlist[l]//nxnyD
+                                rest = pointlist[l]-kD*nxnyD
+                                jD    = rest//nxD
+                                iD    = rest -jD*nxD
 
-              elif Interptype[l]==22: 
+                                if Interptype[l]==1:
+                                    count+=1
+                                elif Interptype[l]==2:
+                                    count_loc=0
+                                    sum=0.
+                                    npts = 0
+                                    #on cherche les point race et leur coeff
+                                    for kk in range(2):
+                                        for jj in range(2):
+                                            for ii in range(2):
+                                                if colorR[iD +ii ,jD +jj, kD +kk]>=0.1:
+                                                    sum += coeff[count +count_loc]
+                                                    npts +=1
+                                                count_loc+=1
+                                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
+                                    if npts !=0 :
+                                        Interptype[l]=-2
+                                        corr=sum/float(8-npts)
+                                        count_loc=0
+                                        for kk in range(2):
+                                            for jj in range(2):
+                                                for ii in range(2):
+                                                    if colorR[iD +ii ,jD +jj, kD +kk] >= 0.1 and abs(coeff[count +count_loc]) <= cutoff:
+                                                        coeff[count +count_loc] = 0.
+                                                    else:
+                                                        coeff[count +count_loc] +=corr
+                                                    count_loc+=1
+                                    count+=8
 
-                count_loc=0
-                for jj in range(2):
-                  for ii in range(2):
-                    if colorR[iD +ii ,jD +jj]>=0.1: 
-                      if abs(coeff[count +count_loc]) > cutoff: 
-                        #colorD[iD +ii ,jD +jj, kD]=1
-                        npass_loc=2
-                      else:
-                        modifType=1
-                        #Interptype[l]=-22
-                    count_loc+=1
-                count+=4
-
-              #if npass_loc ==2: break
-
-            if npass_loc ==2:
-
-              #on reinitialise le type a une valeur positive, si raccord pas traité a l'etape courante
-              #if modifType==1: 
-              #  for l in range(numpy.size(pointlist)):
-              #     if Interptype[l] < 0: Interptype[l] *=-1
-
-              c2+=1
-              if npass==1:
-                 s[0]=s[0]+'_pass'+str(npass+1)
-              else:
-                 sz=len(s[0])
-                 shift=6
-                 if npass>=10: shift=7
-                 s[0]=s[0][0:sz-shift]+'_pass'+str(npass+1)
-                 #s[0][sz-1]=str(npass+1)
-            else:
-              c1+=1
-              if npass==1: s[0]=s[0]+'_pass'+str(npass)
-
-              if modifType==1: 
-              
-                count =0
-                for l in range(numpy.size(pointlist)):
-        
-                  kD    = pointlist[l]//nxnyD
-                  rest = pointlist[l]-kD*nxnyD
-                  jD    = rest//nxD
-                  iD    = rest -jD*nxD
-
-                  if Interptype[l]==1:
-                    count+=1 
-                  elif Interptype[l]==2: 
-                    count_loc=0
-                    sum=0.
-                    npts = 0
-                    #on cherche les point race et leur coeff
-                    for kk in range(2):
-                      for jj in range(2):
-                       for ii in range(2):
-                         if colorR[iD +ii ,jD +jj, kD +kk]>=0.1: 
-                            sum += coeff[count +count_loc]
-                            npts +=1
-                         count_loc+=1
-                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
-                    if npts !=0 :
-                      Interptype[l]=-2
-                      corr=sum/float(8-npts)
-                      count_loc=0
-                      for kk in range(2):
-                        for jj in range(2):
-                          for ii in range(2):
-                             if colorR[iD +ii ,jD +jj, kD +kk] >= 0.1 and abs(coeff[count +count_loc]) <= cutoff: 
-                               coeff[count +count_loc] = 0.
-                             else:
-                               coeff[count +count_loc] +=corr
-                             count_loc+=1
-                    count+=8
-
-                  elif Interptype[l] == 44: 
-                    count_loc=0
-                    sum=0.
-                    npts = 0
-                    #on cherche les point race et leur coeff
-                    for kk in range(4):
-                      for jj in range(4):
-                       for ii in range(4):
-                         if colorR[iD +ii ,jD +jj, kD +kk]>=0.1: 
-                            sum += coeff[count +count_loc]
-                            npts +=1
-                         count_loc+=1
-                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
-                    if npts !=0 :
-                      Interptype[l]=-44
-                      corr=sum/float(12-npts)
-                      #Reflechir pour Ordre 4
-                      '''
+                                elif Interptype[l] == 44:
+                                    count_loc=0
+                                    sum=0.
+                                    npts = 0
+                                    #on cherche les point race et leur coeff
+                                    for kk in range(4):
+                                        for jj in range(4):
+                                            for ii in range(4):
+                                                if colorR[iD +ii ,jD +jj, kD +kk]>=0.1:
+                                                    sum += coeff[count +count_loc]
+                                                    npts +=1
+                                                count_loc+=1
+                                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
+                                    if npts !=0 :
+                                        Interptype[l]=-44
+                                        corr=sum/float(12-npts)
+                                        #Reflechir pour Ordre 4
+                                        '''
                       count_loc=0
                       for kk in range(4):
                         for jj in range(4):
@@ -5342,52 +5342,52 @@ def _attributeNoPassTransfer(tc, graph=None, npassMax=9, cutoff=1.e-7, verbose=0
                                coeff[count +count_loc] +=corr
                              count_loc+=1
                       '''
-                    count+=8
+                                    count+=8
 
 
-                  elif Interptype[l]==22: 
+                                elif Interptype[l]==22:
 
-                    count_loc=0
-                    sum=0.
-                    npts = 0
-                    #on cherche les point race et leur coeff
-                    for jj in range(2):
-                     for ii in range(2):
-                       if colorR[iD +ii ,jD +jj]>=0.1 and abs(coeff[count +count_loc]) <= cutoff: 
-                          sum += coeff[count +count_loc]
-                          npts +=1
-                       count_loc+=1
-                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
-                    if npts !=0 :
-                      Interptype[l]=-22
-                      corr=sum/float(4-npts)
-                      count_loc=0
-                      for jj in range(2):
-                        for ii in range(2):
-                          if colorR[iD +ii ,jD +jj]>=0.1 and abs(coeff[count +count_loc]) <= cutoff: 
-                            coeff[count +count_loc] = 0.
-                          else:
-                            coeff[count +count_loc] +=corr
-                        count_loc+=1
+                                    count_loc=0
+                                    sum=0.
+                                    npts = 0
+                                    #on cherche les point race et leur coeff
+                                    for jj in range(2):
+                                        for ii in range(2):
+                                            if colorR[iD +ii ,jD +jj]>=0.1 and abs(coeff[count +count_loc]) <= cutoff:
+                                                sum += coeff[count +count_loc]
+                                                npts +=1
+                                            count_loc+=1
+                                    #on modifie type et reparti les micro coeff sur les bon point donneur pour avoir une somme unitaire
+                                    if npts !=0 :
+                                        Interptype[l]=-22
+                                        corr=sum/float(4-npts)
+                                        count_loc=0
+                                        for jj in range(2):
+                                            for ii in range(2):
+                                                if colorR[iD +ii ,jD +jj]>=0.1 and abs(coeff[count +count_loc]) <= cutoff:
+                                                    coeff[count +count_loc] = 0.
+                                                else:
+                                                    coeff[count +count_loc] +=corr
+                                            count_loc+=1
 
-                    count+=4 
+                                    count+=4
 
-            c4=-1
-            if npass > 9: c4=-2  
-            if s[0][c4]==str(npass) and verbose==1: print(s[0], flush=True)
+                    c4=-1
+                    if npass > 9: c4=-2
+                    if s[0][c4]==str(npass) and verbose==1: print(s[0], flush=True)
 
-          else: #raccord pas traité a cette pass
-            if npass==1: s[0]=s[0]+'_pass'+str(npass+1)
+                else: #raccord pas traité a cette pass
+                    if npass==1: s[0]=s[0]+'_pass'+str(npass+1)
 
-    count_rac -=c1
-    print("Bilan: Nb raccord pass"+str(npass)+"=",  c1,". Nb raccord restant a affecter=",  count_rac) 
+        count_rac -=c1
+        print("Bilan: Nb raccord pass"+str(npass)+"=",  c1,". Nb raccord restant a affecter=",  count_rac)
 
-    #if c2!=0: npass+=1
-    if count_rac!=0 and c1!=0: npass+=1
-    else: 
-      lgo=False
-      if count_rac != 0: raise ValueError("Trouble in chimera transfer: cycle dependency")
-  
-    if npass==npassMax:  lgo=False
+        #if c2!=0: npass+=1
+        if count_rac!=0 and c1!=0: npass+=1
+        else:
+            lgo=False
+            if count_rac != 0: raise ValueError("Trouble in chimera transfer: cycle dependency")
 
-  Internal._rmNodesByName(tc,'color*')
+        if npass==npassMax:  lgo=False
+
+    Internal._rmNodesByName(tc,'color*')

@@ -75,9 +75,9 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1, ucData=N
     tps_tr1= Time.time(); tps_tr1= tps_tr1-tps_tr1
     if layer_mode==0 or layer_mode==2:
 
-        if exploc==1 and tc is not None and layer_mode==0: 
-          param_int_tc = FastC.HOOK['param_int_tc']
-          zonesD       = Internal.getZones(tc)
+        if exploc==1 and tc is not None and layer_mode==0:
+            param_int_tc = FastC.HOOK['param_int_tc']
+            zonesD       = Internal.getZones(tc)
 
         hookTransfer = []
         hook1        = FastC.HOOK.copy()
@@ -211,7 +211,7 @@ def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, hook1, gr
                 tmp = Internal.getNodeFromName1(firstpass, 'Parameter_real')
                 if tmp is not None: param_real = tmp[1]
                 else: param_real=None
-                
+
                 zonesD    = Internal.getZones(tc)
 
                 procDict  = graph['procDict']
@@ -225,16 +225,16 @@ def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, hook1, gr
 
                 type_transfert = 0  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
                 for npass in range(1,dtloc[12]+1):
-                   passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
-                   tmp       = Internal.getNodeFromName1( passNode, 'Parameter_real')
-                   if tmp is not None: param_real = tmp[1]
-                   else: param_real=None
+                    passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
+                    tmp       = Internal.getNodeFromName1( passNode, 'Parameter_real')
+                    if tmp is not None: param_real = tmp[1]
+                    else: param_real=None
 
-                   param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
-                   graphID   = graph['graphPass'+str(npass)]
+                    param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+                    graphID   = graph['graphPass'+str(npass)]
 
-                   FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, nstep, nitmax, rk, exploc, num_passage,\
-                                                 varType=varType, graph=graphID, procDict=procDict)
+                    FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, nstep, nitmax, rk, exploc, num_passage,\
+                                               varType=varType, graph=graphID, procDict=procDict)
 
                 #toc = Time.time() - tic
         # if Cmpi.rank == 0:
@@ -270,7 +270,7 @@ def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, hoo
             if firstpass is not None:
                 param_real= Internal.getNodeFromName1(firstpass, 'Parameter_real')[1]
                 param_int = Internal.getNodeFromName1(firstpass, 'Parameter_int' )[1]
-                
+
                 zonesD    = Internal.getZones(tc)
                 zonesD2   = Internal.getZones(tc2)
 
@@ -303,12 +303,12 @@ def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, hoo
 
                 # #recuperation Nb pas instationnaire dans tc
                 for npass in range(1,dtloc[12]):
-                   passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
-                   param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
-                   param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+                    passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
+                    param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
+                    param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
 
-                   FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target,
-                                              nstep, nitmax, rk, exploc, num_passage, graph=graphAll1, procDict=procDict, isWireModel_int=int(isWireModel))
+                    FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target,
+                                               nstep, nitmax, rk, exploc, num_passage, graph=graphAll1, procDict=procDict, isWireModel_int=int(isWireModel))
 
 
                 #toc = Time.time() - tic
@@ -632,11 +632,11 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
 
             # compute info linelets
             if Re > 0: #Adaptive method
-              h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+                h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
             elif Re == 0:
-              h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
+                h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
             else: #Alferez' og method
-              h0, nbpts_linelets = 1.e-6, 45
+                h0, nbpts_linelets = 1.e-6, 45
 
     first = Internal.getNodeFromName1(t, 'NbptsLinelets')
     if first is None: Internal.createUniqueChild(t, 'NbptsLinelets', 'DataArray_t', value=nbpts_linelets)
@@ -758,20 +758,20 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     if tc is not None:
         #nbpts_linelets = 0
         if solverIBC is not None:
-          if Re > 0: #Adaptive method
-             _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-          elif Re == 0:
-             _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-          else: #Alferez' og method
-             _createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+            if Re > 0: #Adaptive method
+                _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            elif Re == 0:
+                _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            else: #Alferez' og method
+                _createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
 
         Nbpass = 1
         for z in Internal.getZones(tc):
-          subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-          for s in subRegions:
-            if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2  
-            elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3  
-            elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4  
+            subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+            for s in subRegions:
+                if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2
+                elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3
+                elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4
 
         Nbpass = Cmpi.allreduce(Nbpass, op=Cmpi.MAX)
 
@@ -781,18 +781,18 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
         else: graphLoc=graph
 
         for nOpass in range(1,Nbpass+1):
-          if (Nbpass==1): FilterPass=None
-          else:           FilterPass='pass'+str(nOpass)
+            if (Nbpass==1): FilterPass=None
+            else:           FilterPass='pass'+str(nOpass)
 
-          PACK.miseAPlatDonorTree__(t, tc, graph=graphLoc['graphPass'+str(nOpass)], procDict=graphLoc['procDict'], nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
+            PACK.miseAPlatDonorTree__(t, tc, graph=graphLoc['graphPass'+str(nOpass)], procDict=graphLoc['procDict'], nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
 
-          tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
-          key = 'param_int_tc'+str(nOpass)
-          FastC.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
-          param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
-          key = 'param_real_tc'+str(nOpass)
-          if param_real_tc is not None: FastC.HOOK[key] = param_real_tc[1]
-          else:  FastC.HOOK[key] = None
+            tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
+            key = 'param_int_tc'+str(nOpass)
+            FastC.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
+            param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
+            key = 'param_real_tc'+str(nOpass)
+            if param_real_tc is not None: FastC.HOOK[key] = param_real_tc[1]
+            else:  FastC.HOOK[key] = None
     else:
         Nbpass=0
         FastC.HOOK['param_real_tc1'] = None

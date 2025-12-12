@@ -49,10 +49,10 @@ def prepareIBMData(t_case, t_out, tc_out, t_in=None, to=None, tbox=None, tinit=N
     import time as python_time
 
     optimized=-1  #sinon  faut appeler connector legacy
-    nature   = 0  
-    if ext == -1: 
-      ext = depth+1
-      if optimized==-1: ext=depth
+    nature   = 0
+    if ext == -1:
+        ext = depth+1
+        if optimized==-1: ext=depth
 
     if isinstance(t_case, str): tb = C.convertFile2PyTree(t_case)
     else: tb = Internal.copyTree(t_case)
@@ -147,9 +147,9 @@ def prepareIBMData(t_case, t_out, tc_out, t_in=None, to=None, tbox=None, tinit=N
     #===================
     if verbose: pt0 = python_time.time(); C_IBM.printTimeAndMemory__('compute wall distance', time=-1)
     C_IBM._dist2wallIBM(t, tb, dimPb=dimPb, frontType=frontType, Reynolds=Reynolds, yplus=yplus, Lref=Lref,
-                  correctionMultiCorpsF42=correctionMultiCorpsF42, heightMaxF42=heightMaxF42, dTarget=dTarget,
-                  tbFilament=tbFilament, cleanCellN=cleanCellN)
-                  #tbFilament=tbFilament, cleanCellN=cleanCellN, verbose=verbose)
+                        correctionMultiCorpsF42=correctionMultiCorpsF42, heightMaxF42=heightMaxF42, dTarget=dTarget,
+                        tbFilament=tbFilament, cleanCellN=cleanCellN)
+    #tbFilament=tbFilament, cleanCellN=cleanCellN, verbose=verbose)
     if verbose: C_IBM.printTimeAndMemory__('compute wall distance', time=python_time.time()-pt0)
 
     #===================
@@ -157,10 +157,10 @@ def prepareIBMData(t_case, t_out, tc_out, t_in=None, to=None, tbox=None, tinit=N
     #===================
     if verbose: pt0 = python_time.time(); C_IBM.printTimeAndMemory__('blank by IBC bodies', time=-1)
     C_IBM._blankingIBM(t, tb, dimPb=dimPb, frontType=frontType, IBCType=IBCType, depth=depth,
-                 Reynolds=Reynolds, yplus=yplus, Lref=Lref, twoFronts=twoFronts,
-                 heightMaxF42=heightMaxF42, correctionMultiCorpsF42=correctionMultiCorpsF42,
-                 wallAdaptF42=wallAdaptF42, blankingF42=blankingF42,
-                 tbFilament=tbFilament, cleanCellN=cleanCellN)
+                       Reynolds=Reynolds, yplus=yplus, Lref=Lref, twoFronts=twoFronts,
+                       heightMaxF42=heightMaxF42, correctionMultiCorpsF42=correctionMultiCorpsF42,
+                       wallAdaptF42=wallAdaptF42, blankingF42=blankingF42,
+                       tbFilament=tbFilament, cleanCellN=cleanCellN)
 
     Cmpi.barrier()
     C_IBM._redispatch__(t=t)
@@ -224,7 +224,7 @@ def prepareIBMData(t_case, t_out, tc_out, t_in=None, to=None, tbox=None, tinit=N
 
 
     t, tc, tc2 = C_IBM.initializeIBM(t, tc, tb, tinit=tinit, tbCurvi=tbCurvi, dimPb=dimPb, twoFronts=twoFronts,
-                               tbFilament=tbFilament, cleanCellN=cleanCellN)
+                                     tbFilament=tbFilament, cleanCellN=cleanCellN)
 
     C_IBM._redispatch__(t=t, tc=tc, tc2=tc2)
 
@@ -318,10 +318,10 @@ def prepareIBMDataExtrude(t_case, t_out, tc_out, t, to=None,
     #===================
     if verbose: pt0 = python_time.time(); C_IBM.printTimeAndMemory__('blank by IBC bodies', time=-1, functionName='prepareIBMDataExtrude')
     C_IBM._blankingIBM(t, tb, dimPb=dimPb, frontType=frontType, IBCType=IBCType, depth=depth,
-                 Reynolds=Reynolds, yplus=yplus, Lref=Lref, twoFronts=twoFronts,
-                 heightMaxF42=heightMaxF42, correctionMultiCorpsF42=correctionMultiCorpsF42,
-                 wallAdaptF42=wallAdaptF42, blankingF42=blankingF42,
-                 tbFilament=tbFilament)
+                       Reynolds=Reynolds, yplus=yplus, Lref=Lref, twoFronts=twoFronts,
+                       heightMaxF42=heightMaxF42, correctionMultiCorpsF42=correctionMultiCorpsF42,
+                       wallAdaptF42=wallAdaptF42, blankingF42=blankingF42,
+                       tbFilament=tbFilament)
 
     ##set the kmin et kmax Ghost cells are potential donors                                          #__
     listvars_local =['cellNChim','cellNIBC']                                                         #  |
@@ -365,7 +365,7 @@ def prepareIBMDataExtrude(t_case, t_out, tc_out, t, to=None,
                                                    cartesian=cartesian, twoFronts=twoFronts, check=check,
                                                    tbFilament=tbFilament, optimized=optimized)
     for z in Internal.getZones(t):
-       fastc._updateNatureForIBMGhost(z, Internal.__GridCoordinates__, Internal.__FlowSolutionNodes__, Internal.__FlowSolutionCenters__)
+        fastc._updateNatureForIBMGhost(z, Internal.__GridCoordinates__, Internal.__FlowSolutionNodes__, Internal.__FlowSolutionCenters__)
 
     if verbose: C_IBM.printTimeAndMemory__('build IBM front', time=python_time.time()-pt0)
 
@@ -460,15 +460,15 @@ def buildFrontIBM(t, tc, tb=None, dimPb=3, frontType=1, cartesian=True, twoFront
         Internal._rmNodesByName(tc,'cellN')
         C._initVars(tc,'{cellN}=1.')
         for z in Internal.getZones(tc):
-          cellN = Internal.getNodeFromName(z,'cellN')[1]
-          z1    = Internal.getNodeFromName(t,z[0])
-          sol   = Internal.getNodeFromName(z1,'FlowSolution#Centers')
-          cellNc= Internal.getNodeFromName(sol,'cellN')[1]
-          sh = numpy.shape(cellNc)
-          sh2 = numpy.shape(cellN)
-          if len(sh)==3 and sh[2]!=1: cellN[:,:,:]=cellNc[:,:,:]
-          elif len(sh)==3 and sh[2]==1: cellN[:,:]=cellNc[:,:,0]
-          else: cellN[:,:]=cellNc[:,:]
+            cellN = Internal.getNodeFromName(z,'cellN')[1]
+            z1    = Internal.getNodeFromName(t,z[0])
+            sol   = Internal.getNodeFromName(z1,'FlowSolution#Centers')
+            cellNc= Internal.getNodeFromName(sol,'cellN')[1]
+            sh = numpy.shape(cellNc)
+            sh2 = numpy.shape(cellN)
+            if len(sh)==3 and sh[2]!=1: cellN[:,:,:]=cellNc[:,:,:]
+            elif len(sh)==3 and sh[2]==1: cellN[:,:]=cellNc[:,:,0]
+            else: cellN[:,:]=cellNc[:,:]
 
     else:
         npass = 1
@@ -515,25 +515,25 @@ def buildFrontIBM(t, tc, tb=None, dimPb=3, frontType=1, cartesian=True, twoFront
 
 
     if optimized==-1:
-      for l in range(npass):
-         # Transfert du cellNIBC (= cellN a cet endroit)
-         C._cpVars(t,'centers:cellN',tc,'cellN')
-         #  propager cellNle='cellNFront'
-         #Xmpi._setInterpTransfers(t, tc, variables=['cellN'], cellNVariable='cellN', compact=0)  # cellNVarriable ne permet pas de transmettre des valeur=2, qui se transforme en 0
-         Xmpi._setInterpTransfers(t, tc, variables=['cellN'], compact=0)  # contournement provisoire car risque cellN= 1.652...  avec interp sur 8 pts
-      for z in Internal.getZones(t):
-        tmp = Internal.getNodeFromName(z,'cellN')[1]
-        sh = numpy.shape(tmp)
-        for k in range(sh[2]):
-          for j in range(sh[1]):
-            for i in range(sh[0]):
-              if tmp[i,j,k] >= 1.99 and tmp[i,j,k] <= 2.01: tmp[i,j,k]=2.
+        for l in range(npass):
+            # Transfert du cellNIBC (= cellN a cet endroit)
+            C._cpVars(t,'centers:cellN',tc,'cellN')
+            #  propager cellNle='cellNFront'
+            #Xmpi._setInterpTransfers(t, tc, variables=['cellN'], cellNVariable='cellN', compact=0)  # cellNVarriable ne permet pas de transmettre des valeur=2, qui se transforme en 0
+            Xmpi._setInterpTransfers(t, tc, variables=['cellN'], compact=0)  # contournement provisoire car risque cellN= 1.652...  avec interp sur 8 pts
+        for z in Internal.getZones(t):
+            tmp = Internal.getNodeFromName(z,'cellN')[1]
+            sh = numpy.shape(tmp)
+            for k in range(sh[2]):
+                for j in range(sh[1]):
+                    for i in range(sh[0]):
+                        if tmp[i,j,k] >= 1.99 and tmp[i,j,k] <= 2.01: tmp[i,j,k]=2.
 
-      for z in Internal.getZones(t):
-         fastc._updateNatureForIBMGhost(z,
-                                        Internal.__GridCoordinates__,
-                                        Internal.__FlowSolutionNodes__,
-                                        Internal.__FlowSolutionCenters__)
+        for z in Internal.getZones(t):
+            fastc._updateNatureForIBMGhost(z,
+                                           Internal.__GridCoordinates__,
+                                           Internal.__FlowSolutionNodes__,
+                                           Internal.__FlowSolutionCenters__)
 
     if check and Cmpi.rank == 0:
         C.convertPyTree2File(front, 'front.cgns')
@@ -593,12 +593,12 @@ def _setInterpDataIBM(t, tc, tb, front, front2=None, dimPb=3, frontType=1, IBCTy
             if isFilamentOnly:tb_local= tbFilament
             else:             tb_local= Internal.merge([tb,tbFilament])
         res = C_IBM.getAllIBMPoints(zonesRIBC, loc='centers',tb=tb_local, tfront=front, frontType=frontType,
-                              cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref,
-                              isOrthoFirst=isFilamentOnly, check=check)
+                                    cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref,
+                                    isOrthoFirst=isFilamentOnly, check=check)
         if twoFronts:
             res2 = C_IBM.getAllIBMPoints(zonesRIBC, loc='centers',tb=tb, tfront=front2, frontType=frontType,
-                                   cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check,
-                                   twoFronts=twoFronts)
+                                         cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check,
+                                         twoFronts=twoFronts)
     # cleaning
     C._rmVars(tc,['cellNChim','cellNIBC','TurbulentDistance','cellNFront'])
     # dans t, il faut cellNChim et cellNIBCDnr pour recalculer le cellN a la fin
@@ -1033,7 +1033,7 @@ def doInterp2(t, tc, tbb, tb=None, typeI='ID', dim=3, dictOfADT=None, front=None
         if zonesRIBC == []: return tc
 
         res = C_IBM.getAllIBMPoints(zonesRIBC, loc='centers',tb=tb, tfront=front, frontType=frontType, \
-                              cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check)
+                                    cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check)
         nbZonesIBC = len(zonesRIBC)
         dictOfADT = {}
         dictOfCorrectedPtsByIBCType = res[0]
@@ -1228,9 +1228,9 @@ def prepareIBMData2(t, tbody, DEPTH=2, loc='centers', frontType=1, inv=False, in
         C._initVars(t,'{centers:cellNFront}=logical_and({centers:cellNIBC}>0.5, {centers:cellNIBC}<1.5)')
         for z in Internal.getZones(t):
             Connector.connector._updateNatureForIBM(z, IBCType,
-                                          Internal.__GridCoordinates__,
-                                          Internal.__FlowSolutionNodes__,
-                                          Internal.__FlowSolutionCenters__)
+                                                    Internal.__GridCoordinates__,
+                                                    Internal.__FlowSolutionNodes__,
+                                                    Internal.__FlowSolutionCenters__)
 
     else: # EN 2 PARTIES : NECESSITE LE TRANSFERT DU FRONT PAR INTERPOLATION, QUI EST CALCULEE APRES
         print('Euler: on repousse le front un peu plus loin.')
@@ -1242,9 +1242,9 @@ def prepareIBMData2(t, tbody, DEPTH=2, loc='centers', frontType=1, inv=False, in
         C._rmVars(t, ['centers:dummy'])
         for z in Internal.getZones(t):
             Connector.connector._updateNatureForIBM(z, IBCType,
-                                          Internal.__GridCoordinates__,
-                                          Internal.__FlowSolutionNodes__,
-                                          Internal.__FlowSolutionCenters__)
+                                                    Internal.__GridCoordinates__,
+                                                    Internal.__FlowSolutionNodes__,
+                                                    Internal.__FlowSolutionCenters__)
     #------------------------------------------------------------------------
     # setInterpData - Chimere
     C._initVars(t,'{centers:cellN}=maximum(0.,{centers:cellNChim})')# vaut -3, 0, 1, 2 initialement
@@ -1525,7 +1525,7 @@ def doInterp3(t, tc, tbb, tb=None, typeI='ID', dim=3, dictOfADT=None, frontType=
         C.convertPyTree2File(front, 'front.cgns')
 
         res = C_IBM.getAllIBMPoints(zonesRIBC, loc='centers',tb=tb, tfront=front, frontType=frontType, \
-                              cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check)
+                                    cellNName='cellNIBC', depth=depth, IBCType=IBCType, Reynolds=Reynolds, yplus=yplus, Lref=Lref, check=check)
         nbZonesIBC = len(zonesRIBC)
         dictOfADT = {}
         dictOfCorrectedPtsByIBCType = res[0]
@@ -2235,30 +2235,30 @@ def _correctCellNCorner(t, tc, dim=3, verbose=0):
         else:
             ni =sh_R[0]; nj =sh_R[1];nk =sh_R[2]
             for i in range(2):
-               cellN[i     , 0      , :]=1
-               cellN[ni-1-i, 0      , :]=1
-               cellN[i     , nj-1   , :]=1
-               cellN[ni-1-i, nj-1   , :]=1
+                cellN[i     , 0      , :]=1
+                cellN[ni-1-i, 0      , :]=1
+                cellN[i     , nj-1   , :]=1
+                cellN[ni-1-i, nj-1   , :]=1
             cellN[0     , 1      , :]=1
             cellN[ni-1  , 1      , :]=1
             cellN[0     , nj-2   , :]=1
             cellN[ni-1  , nj-2   , :]=1
 
             for j in range(2):
-               cellN[2:ni-2, j      , 0     ]=1
-               cellN[2:ni-2, nj-1-j , 0     ]=1
-               cellN[2:ni-2, j      , nk-1  ]=1
-               cellN[2:ni-2, nj-1-j , nk-1  ]=1
+                cellN[2:ni-2, j      , 0     ]=1
+                cellN[2:ni-2, nj-1-j , 0     ]=1
+                cellN[2:ni-2, j      , nk-1  ]=1
+                cellN[2:ni-2, nj-1-j , nk-1  ]=1
             cellN[2:ni-2, 0      ,    1  ]=1
             cellN[2:ni-2, nj-1   ,    1  ]=1
             cellN[2:ni-2, 0      ,  nk-2 ]=1
             cellN[2:ni-2, nj-1   ,  nk-2 ]=1
 
             for i in range(2):
-               cellN[i     ,2:nj-2, 0   ]=1
-               cellN[ni-1-i,2:nj-2, 0   ]=1
-               cellN[i     ,2:nj-2, nk-1]=1
-               cellN[ni-1-i,2:nj-2, nk-1]=1
+                cellN[i     ,2:nj-2, 0   ]=1
+                cellN[ni-1-i,2:nj-2, 0   ]=1
+                cellN[i     ,2:nj-2, nk-1]=1
+                cellN[ni-1-i,2:nj-2, nk-1]=1
             cellN[0     , 2:nj-2 , 1   ]=1
             cellN[ni-1  , 2:nj-2 , 1   ]=1
             cellN[0     , 2:nj-2 , nk-2]=1
@@ -2314,54 +2314,54 @@ def _correctCellNCorner(t, tc, dim=3, verbose=0):
                 #if zRname=='Cart.2X0': print('ijkD', iD, jD,kD, 'zD:', z[0], 'R_R', cellNCornerR_R[iR,jR,kR], 'ijkR', iR,jR,kR, 'type', Interptype[l],'R_D', cellNCornerR_D[iD,jD,kD] )
 
                 if dim==3:
-                  if cellNCornerR_R[iR,jR,kR]==3:
+                    if cellNCornerR_R[iR,jR,kR]==3:
 
-                    if Interptype[l]==1 and cellNCornerR_D[iD,jD,kD]<=1:
-                        cellNCornerD_D[iD,jD,kD]=1
-                        count +=1
+                        if Interptype[l]==1 and cellNCornerR_D[iD,jD,kD]<=1:
+                            cellNCornerD_D[iD,jD,kD]=1
+                            count +=1
 
-                    elif Interptype[l]==2:
-                        count_loc=0
-                        for kk in range(2):
+                        elif Interptype[l]==2:
+                            count_loc=0
+                            for kk in range(2):
+                                for jj in range(2):
+                                    for ii in range(2):
+                                        if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj, kD+ kk]<=1: cellNCornerD_D[iD +ii ,jD +jj, kD+ kk]=1
+                                        count_loc+=1
+                            count+=8
+
+                        elif Interptype[l]==44:
+
+                            for kk in range(4):
+                                for jj in range(4):
+                                    for ii in range(4):
+                                        val = coeff[count +ii ] * coeff[count +jj + 4 ] * coeff[count +kk +8 ]
+                                        #if zd[0]=='Cart.79X0': print('type 44: ijkD', iD, jD,kD, 'zR:', zRname, val, 'iijjkk', ii,jj,kk )
+                                        if abs(val) > 1.e-11 and cellNCornerR_D[iD +ii, jD +jj, kD +kk]<=1: cellNCornerD_D[iD +ii, jD +jj, kD +kk ]=1
+                            count+=12
+
+                        elif Interptype[l]==22:
+
+                            count_loc=0
                             for jj in range(2):
                                 for ii in range(2):
-                                    if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj, kD+ kk]<=1: cellNCornerD_D[iD +ii ,jD +jj, kD+ kk]=1
+                                    if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj, kD]<=1: cellNCornerD_D[iD +ii ,jD +jj, kD]=1
                                     count_loc+=1
-                        count+=8
-
-                    elif Interptype[l]==44:
-
-                        for kk in range(4):
-                            for jj in range(4):
-                                for ii in range(4):
-                                    val = coeff[count +ii ] * coeff[count +jj + 4 ] * coeff[count +kk +8 ]
-                                    #if zd[0]=='Cart.79X0': print('type 44: ijkD', iD, jD,kD, 'zR:', zRname, val, 'iijjkk', ii,jj,kk )
-                                    if abs(val) > 1.e-11 and cellNCornerR_D[iD +ii, jD +jj, kD +kk]<=1: cellNCornerD_D[iD +ii, jD +jj, kD +kk ]=1
-                        count+=12
-
-                    elif Interptype[l]==22:
-
-                        count_loc=0
-                        for jj in range(2):
-                            for ii in range(2):
-                                if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj, kD]<=1: cellNCornerD_D[iD +ii ,jD +jj, kD]=1
-                                count_loc+=1
-                        count+=4
+                            count+=4
                 else: #dim=2
-                  if cellNCornerR_R[iR,jR]==3:
+                    if cellNCornerR_R[iR,jR]==3:
 
-                    if Interptype[l]==1 and cellNCornerR_D[iD,jD]<=1:
-                        cellNCornerD_D[iD,jDD]=1
-                        count +=1
+                        if Interptype[l]==1 and cellNCornerR_D[iD,jD]<=1:
+                            cellNCornerD_D[iD,jDD]=1
+                            count +=1
 
-                    elif Interptype[l]==22:
+                        elif Interptype[l]==22:
 
-                        count_loc=0
-                        for jj in range(2):
-                            for ii in range(2):
-                                if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj]<=1: cellNCornerD_D[iD +ii ,jD +jj]=1
-                                count_loc+=1
-                        count+=4
+                            count_loc=0
+                            for jj in range(2):
+                                for ii in range(2):
+                                    if coeff[count +count_loc] > 1.e-8 and cellNCornerR_D[iD +ii ,jD +jj]<=1: cellNCornerD_D[iD +ii ,jD +jj]=1
+                                    count_loc+=1
+                            count+=4
 
     Internal._rmNodesByName(tc,'ID_*')
 

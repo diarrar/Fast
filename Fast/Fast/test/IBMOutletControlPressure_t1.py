@@ -89,9 +89,9 @@ for b in Internal.getBases(tc):
 ####
 
 for z in Internal.getZones(tc):
-   subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
-   for s in subRegions:
-      print(z[0], 'newName000', s[0])
+    subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+    for s in subRegions:
+        print(z[0], 'newName000', s[0])
 
 
 [RoInf, RouInf, RovInf, RowInf, RoeInf, PInf, TInf, cvInf, MInf,

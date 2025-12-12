@@ -208,7 +208,7 @@ test.testT(t,1)
 for z in Internal.getZones(tc):
     subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
     for s in subRegions:
-      s[0]=s[0][0:-6]
+        s[0]=s[0][0:-6]
 
 test.testT(tc,2)
 

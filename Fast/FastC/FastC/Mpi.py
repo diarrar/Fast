@@ -32,7 +32,7 @@ except: pass
 # Adim: KCore.adim1 for Minf=0.1
 #===============================================================================
 def __setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, it_target,
-                         nstep, nitmax, rk, exploc, num_passage, varType =2,
+                         nstep, nitmax, rk, exploc, num_passage, varType=2,
                          graph=None, procDict=None):
 
     ##for moving IBMs
@@ -50,7 +50,7 @@ def __setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, it_t
 
         no_transfert = comm_P2P
         if dest == Cmpi.rank: # transfert intra_processus
-            
+
 
             FastC.fastc.___setInterpTransfers( zones, zonesD, vars, dtloc, param_int, param_real, it_target, varType, no_transfert, nstep,
                                                nitmax, rk, exploc, num_passage)
@@ -58,8 +58,8 @@ def __setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, it_t
             rank  = Cmpi.rank
             type_transfert =2 #inutile
             infos = FastC.fastc.__setInterpTransfersD(zones, zonesD, vars, dtloc, param_int, param_real, it_target, varType,
-                                                    type_transfert, no_transfert, nstep, nitmax, rk, exploc, num_passage, rank,
-                                                    isIbmMoving_int)
+                                                      type_transfert, no_transfert, nstep, nitmax, rk, exploc, num_passage, rank,
+                                                      isIbmMoving_int)
             infos = []
             if infos != []:
                 for n in infos:

@@ -105,27 +105,27 @@ def miseAPlatDonorTree__(t, tc, graph=None, procDict=None, graphID_Unsteady=None
             bcs = Internal.getNodesFromType2(zd, 'BC_t')
             bc_info = []
             for c4, bc in enumerate(bcs):
-               bcname = bc[0].split('_')
-               btype = Internal.getValue(bc)
-               #if 'BCFluxOctreeF' == btype and bcname[1]==zRname: nbfluCons+=1 #flux donneur(Fine)
-               if 'BCFluxOctreeC' == btype:                                    #flux receveur (Coarse)
-                   idir_tg=-10
-                   if   bcname[2][0:4]=='imin': idir_tg=2
-                   elif bcname[2][0:4]=='imax': idir_tg=1
-                   elif bcname[2][0:4]=='jmin': idir_tg=4
-                   elif bcname[2][0:4]=='jmax': idir_tg=3
-                   elif bcname[2][0:4]=='kmin': idir_tg=6
-                   elif bcname[2][0:4]=='kmax': idir_tg=5
-                   bc_info.append( [ bcname[1], idir_tg, c4 ] )
+                bcname = bc[0].split('_')
+                btype = Internal.getValue(bc)
+                #if 'BCFluxOctreeF' == btype and bcname[1]==zRname: nbfluCons+=1 #flux donneur(Fine)
+                if 'BCFluxOctreeC' == btype:                                    #flux receveur (Coarse)
+                    idir_tg=-10
+                    if   bcname[2][0:4]=='imin': idir_tg=2
+                    elif bcname[2][0:4]=='imax': idir_tg=1
+                    elif bcname[2][0:4]=='jmin': idir_tg=4
+                    elif bcname[2][0:4]=='jmax': idir_tg=3
+                    elif bcname[2][0:4]=='kmin': idir_tg=6
+                    elif bcname[2][0:4]=='kmax': idir_tg=5
+                    bc_info.append( [ bcname[1], idir_tg, c4 ] )
             infoZoneList[zd[0]] = [ c , bc_info ] #[ No zoneD, bcs(conservatif)]
 
             subRegionsBrut = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
             subRegions=[]
             for s in subRegionsBrut:
-               if FilterPass==None: subRegions.append(s)
-               elif s[0][-5:]== FilterPass or s[0][-6:] == FilterPass:  
-                 subRegions.append(s)
-                 #print("filtre raccord", s[0][-5:])
+                if FilterPass==None: subRegions.append(s)
+                elif s[0][-5:]== FilterPass or s[0][-6:] == FilterPass:
+                    subRegions.append(s)
+                    #print("filtre raccord", s[0][-5:])
 
             meshtype   = 1
             zonetype   = Internal.getNodeFromType1(z, 'ZoneType_t')
@@ -385,13 +385,13 @@ def miseAPlatDonorTree__(t, tc, graph=None, procDict=None, graphID_Unsteady=None
     param_real = numpy.empty(size_real, dtype=numpy.float64)
 
     if FilterPass == None or FilterPass=='pass1':
-       cont = Internal.createUniqueChild(tc, 'Pass1', 'UserDefinedData_t')
+        cont = Internal.createUniqueChild(tc, 'Pass1', 'UserDefinedData_t')
     elif FilterPass[0:4]=='pass':
-      name='P'+FilterPass[1:]
-      cont = Internal.createUniqueChild(tc, name, 'UserDefinedData_t')
+        name='P'+FilterPass[1:]
+        cont = Internal.createUniqueChild(tc, name, 'UserDefinedData_t')
     else:
-       print("Error: No passe inconnue pour mise a plat")
-       sys.exit()
+        print("Error: No passe inconnue pour mise a plat")
+        sys.exit()
 
     Internal.createUniqueChild(cont, 'Parameter_int' , 'DataArray_t', param_int)
     if size_real != 0:
@@ -915,8 +915,8 @@ def miseAPlatDonorTree__(t, tc, graph=None, procDict=None, graphID_Unsteady=None
             param_int[ pt_flu +2]= no
 
             #determination No Bc sur zone receuveuse a partir du nom du noeud bc
-            #print('zDR',zd[0], zRname,FilterPass, flush=True) 
-            #print('check',infoZoneList[zRname], flush=True) 
+            #print('zDR',zd[0], zRname,FilterPass, flush=True)
+            #print('check',infoZoneList[zRname], flush=True)
             for bc in infoZoneList[zRname][1]:
                 if bc[0] == zd[0] and bc[1] == idir_bc: param_int[pt_flu+3] = bc[2]
 

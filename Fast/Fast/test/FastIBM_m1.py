@@ -56,11 +56,11 @@ if 'modulo_verif' in numb: moduloVerif = numb['modulo_verif']
 else: moduloVerif = 200
 
 for it in range(NIT):
-        FastS._compute(t, metrics, it, tc, graph)
-        if it%moduloVerif == 0:
-            if Cmpi.rank == 0: print('- %d / %d - %f'%(it+it0, NIT+it0, time0))
-            FastS.display_temporal_criteria(t, metrics, it)
-        time0 += time_step
+    FastS._compute(t, metrics, it, tc, graph)
+    if it%moduloVerif == 0:
+        if Cmpi.rank == 0: print('- %d / %d - %f'%(it+it0, NIT+it0, time0))
+        FastS.display_temporal_criteria(t, metrics, it)
+    time0 += time_step
 
 
 Internal.createUniqueChild(t, 'Iteration', 'DataArray_t', value=it0+NIT)
@@ -69,7 +69,7 @@ Internal.createUniqueChild(t, 'Time', 'DataArray_t', value=time0)
 
 FastC.save(t,LOCAL+'/restart.cgns')
 if Cmpi.size > 1:
-  Cmpi.barrier()
+    Cmpi.barrier()
 
 if Cmpi.rank == 0:
     t = C.convertFile2PyTree(LOCAL+'/restart.cgns')
