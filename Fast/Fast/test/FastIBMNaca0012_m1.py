@@ -61,6 +61,14 @@ if Cmpi.rank==0:
     test.testT(t , 1)
     test.testT(tc, 2)
 
+tcskel = Cmpi.convert2SkeletonTree(tc)
+tcskel = Cmpi.allgatherTree(tcskel)
+graph = FastC.prepGraphs(tcskel)
+#del tcskel
+FastC._attributeNoPassTransfer(tc, graph=graph, cutoff=1.e-7, verbose=0)
+
+
+
 ##COMPUTE
 numb = {}
 numb["temporal_scheme"]    = "implicit"
@@ -77,8 +85,6 @@ numz["scheme"]             = "roe"
 it0 = 0.; time0 = 0.
 FastC._setNum2Base(t, numb); FastC._setNum2Zones(t, numz)
 
-tcskel = Cmpi.convert2SkeletonTree(tc)
-tcskel = Cmpi.allgatherTree(tcskel)
 graph = FastC.prepGraphs(tcskel)
 del tcskel
 
@@ -95,6 +101,11 @@ Internal._rmNodesFromName(tc, 'Parameter_int')
 Internal._rmNodesByName(tc, '.Solver#Param')
 Internal._rmNodesByName(tc, '.Solver#ownData')
 
+for z in Internal.getZones(tc):
+    subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+    for s in subRegions:
+      s[0]=s[0][0:-6]
+
 if Cmpi.rank==0:
     test.testT(t , 3)
     test.testT(tc, 4)
@@ -109,5 +120,4 @@ wall, aeroLoads = FastIBM.computeAerodynamicCoefficients(wall, aeroLoads, dimPb=
 import Converter.PyTree as C
 C._rmVars(wall, ['yplus', 'yplusIP'])
 
-if Cmpi.rank==0:
-    test.testT(wall, 5)
+if Cmpi.rank==0: test.testT(wall, 5)

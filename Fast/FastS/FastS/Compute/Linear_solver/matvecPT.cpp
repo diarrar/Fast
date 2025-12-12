@@ -65,6 +65,10 @@ PyObject* K_FASTS::_matvecPT(PyObject* self, PyObject* args)
   E_Int* ipt_omp = iptdtloc + shift_omp;
 
 
+  E_Int npass_transfer = iptdtloc[12];
+  E_Int* int_tc[npass_transfer +1];  //+1 pour gerer npass_transfert=0
+  E_Float* real_tc[npass_transfer +1];
+
   E_Int lcfl= 0;
  // 
  // 
@@ -85,16 +89,25 @@ PyObject* K_FASTS::_matvecPT(PyObject* self, PyObject* args)
  E_Int lssiter_loc; E_Int lexit_lu;  E_Int lssiter_verif;
  E_Int it_target = iptdtloc[4];
 
- pyParam_int_tc = PyDict_GetItemString(work,"param_int_tc");
- pyParam_real_tc= PyDict_GetItemString(work,"param_real_tc"); 
+ for (E_Int nopass = 1; nopass <= npass_transfer; nopass++)
+   {
+      char str_real[15];char str_int[14];
+      if      (nopass == 1) {strcpy(str_int, "param_int_tc1"); strcpy(str_real, "param_real_tc1");}
+      else if (nopass == 2) {strcpy(str_int, "param_int_tc2"); strcpy(str_real, "param_real_tc2");}
+      else if (nopass == 3) {strcpy(str_int, "param_int_tc3"); strcpy(str_real, "param_real_tc3");}
+      else if (nopass == 4) {strcpy(str_int, "param_int_tc4"); strcpy(str_real, "param_real_tc4");}
+      else {printf("transfert : npass > 4 pas codee."); return NULL;}
 
- if (pyParam_int_tc != Py_None)
- { K_NUMPY::getFromNumpyArray(pyParam_int_tc , param_int_tc ); ipt_param_int_tc = param_int_tc -> begin(); }
- else{ ipt_param_int_tc = NULL; }
+      pyParam_int_tc  = PyDict_GetItemString(work, str_int );
+      pyParam_real_tc = PyDict_GetItemString(work, str_real); 
 
- if (pyParam_real_tc != Py_None)
- { K_NUMPY::getFromNumpyArray(pyParam_real_tc, param_real_tc); ipt_param_real_tc= param_real_tc-> begin(); }
- else{ ipt_param_real_tc = NULL; }
+      K_NUMPY::getFromNumpyArray(pyParam_int_tc , param_int_tc );  int_tc[ nopass-1 ]= param_int_tc -> begin();
+
+      if ( pyParam_real_tc != Py_None) 
+      { K_NUMPY::getFromNumpyArray(pyParam_real_tc, param_real_tc); real_tc[ nopass-1 ]= param_real_tc-> begin();}
+      else{ real_tc[nopass-1] = NULL;}
+   }
+ if (npass_transfer == 0){int_tc[0] = NULL; real_tc[0] = NULL; }
 
  pyLinlets_int = PyDict_GetItemString(work,"linelets_int");
  if (pyLinlets_int != Py_None)
@@ -461,7 +474,7 @@ PyObject* K_FASTS::_matvecPT(PyObject* self, PyObject* args)
             ipt_param_int, ipt_param_real   , no_vect_test,
             nidom              , nitrun_loc       , nstep             , nssiter       , it_target, first_it,
             kimpli             , lssiter_verif    , lexit_lu          , omp_mode      , layer_mode, mpi,
-            nisdom_lu_max      ,  mx_nidom        , ndimt_flt         , threadmax_sdm , mx_synchro,
+            nisdom_lu_max      ,  mx_nidom        , ndimt_flt         , threadmax_sdm , mx_synchro, iptdtloc,
             nb_pulse           ,                
             temps              ,
             ipt_ijkv_sdm       , 
@@ -483,7 +496,7 @@ PyObject* K_FASTS::_matvecPT(PyObject* self, PyObject* args)
             iptroflt           , iptroflt2        , iptwig            , iptstat_wig   ,
             iptdrodm           , iptcoe           , iptrot            , iptdelta      , iptro_res,
             iptdrodm_transfer  ,
-            ipt_param_int_tc   , ipt_param_real_tc , ipt_linelets_int, ipt_linelets_real);
+            int_tc             , real_tc          , ipt_linelets_int, ipt_linelets_real);
 
   delete [] iptx; delete [] ipt_param_int;
 
@@ -495,8 +508,7 @@ PyObject* K_FASTS::_matvecPT(PyObject* self, PyObject* args)
   RELEASESHAREDN( timer_omp_Array, tab_timer_omp);
   RELEASESHAREDN( dtlocArray     , dtloc);
  
-  if(pyParam_int_tc  != Py_None ) { RELEASESHAREDN( pyParam_int_tc, param_int_tc);  }
-  if(pyParam_real_tc != Py_None ) { RELEASESHAREDN( pyParam_real_tc, param_real_tc);}
+  if(npass_transfer > 0) {RELEASESHAREDN( pyParam_int_tc, param_int_tc); RELEASESHAREDN( pyParam_real_tc, param_real_tc);}
 
   if (pyLinlets_int  != Py_None) { RELEASESHAREDN( pyLinlets_int , linelets_int ); }
   if (pyLinlets_real != Py_None) { RELEASESHAREDN( pyLinlets_real, linelets_real); }

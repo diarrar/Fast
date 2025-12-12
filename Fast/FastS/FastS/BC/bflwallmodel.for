@@ -3,8 +3,8 @@ c     $Date: 2013-04-30 16:01:06 +0200 (mar. 30 avril 2013) $
 c     $Revision: 39 $
 c     $Author: IvanMary $
 c***********************************************************************
-      subroutine bflwallmodel(ndom, ithread,idir,nbdata,nitcfg, neq_mtr,
-     &                   data, 
+      subroutine bflwallmodel(ndom, ithread, idir, nitcfg, neq_mtr,
+     &                   mobile_coef,
      &                   param_int, param_real, incijk, ind_loop,
      &                   rop, drodm, tijk, ventijk, xmut,x,y,z)
 c***********************************************************************
@@ -45,7 +45,7 @@ c***********************************************************************
 
 #include "FastS/param_solver.h"
 
-      INTEGER_E ndom,neq_mtr,incijk, idir, nbdata,ithread,
+      INTEGER_E ndom,neq_mtr,incijk, idir, ithread,
      & ind_loop(6), param_int(0:*)
 
       REAL_E   rop( param_int(NDIMDX)     * param_int(NEQ)     )
@@ -56,8 +56,7 @@ c***********************************************************************
 
       REAL_E xmut(*),x(*),y(*),z(*)
 
-      REAL_E param_real(0:*)
-      REAL_E data(0:*)
+      REAL_E param_real(0:*), mobile_coef
 
 C var loc
       INTEGER_E im,jm,km,ijkm,l,l0,iadrf,m,i,j,k,lj,ic,jc,kc,
@@ -67,7 +66,7 @@ C var loc
 
       REAL_E p,r,u,v,w,qen,ci_mtr,cj_mtr,ck_mtr,ck_vent,c_ale,
      & ck_mtr_vent, u_int,sens,flu1,flu2,flu3,flu4,flu5,flu6,
-     & nx, ny,nz,utau2,seuil,mobile_coef,ventx,venty,ventz,unorm1,
+     & nx, ny,nz,utau2,seuil,ventx,venty,ventz,unorm1,
      & tcx,tcy,tcz,dist,utau,unorm,surf,aa,yplus,l1,l2,l3,f,tp,fp,tauw,
      & ut,vt,wt,Twall,uplus,pr,prtur,ratio,dt,pf,Tplus,qwall,cp,cond,
      & wall_ut,wall_vt,wall_wt,wall_int,co,si,rot1,rot2,ra,un,vn,wn,
@@ -145,10 +144,6 @@ C var loc
       jc      = jc -1
       kc      = kc -1
       kc_vent = kc_vent -1
-
-      mobile_coef = 1.
-      if(nbdata.ne.0) mobile_coef = data(0)
-
       !write(*,*)'loop', ind_loop, idir
 
       IF(param_int(NEQ).eq.5) THEN

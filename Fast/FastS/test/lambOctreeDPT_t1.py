@@ -1,6 +1,6 @@
 # - compute (pyTree) -
 # - Lamb vortex on octree -
-import Fast.PyTree as Fast
+import FastC.PyTree as FastC
 import FastS.PyTree as FastS
 import Converter.PyTree as C
 import Distributor2.PyTree as D2
@@ -37,7 +37,7 @@ Cmpi.convertPyTree2File(t, LOCAL+'/t1.cgns')
 Cmpi.convertPyTree2File(tc, LOCAL+'/t1c.cgns')
 #sys.exit()
 Cmpi.barrier()
-t,tc,ts,graph=Fast.load(LOCAL+'/t1.cgns', LOCAL+'/t1c.cgns', split='single')
+t,tc,ts,graph=FastC.load(LOCAL+'/t1.cgns', LOCAL+'/t1c.cgns', split='single')
 
 # Init
 t = C.addState(t, 'GoverningEquations', 'Euler')
@@ -48,7 +48,7 @@ numb["temporal_scheme"]    = "explicit"
 numz = {}
 numz["time_step"]          = 0.01
 numz["scheme"]             = "ausmpred"
-Fast._setNum2Zones(t, numz); Fast._setNum2Base(t, numb)
+FastC._setNum2Zones(t, numz); FastC._setNum2Base(t, numb)
 
 #Initialisation parametre calcul: calcul metric + var primitive + compactage + alignement + placement DRAM
 graph1 ={'graphID':graph, 'graphIBCD':None, 'procDict':procDict}

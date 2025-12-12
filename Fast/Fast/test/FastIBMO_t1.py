@@ -1,5 +1,8 @@
 import Fast.IBMO as App
+import FastC.PyTree as FastC
+import FastS.PyTree as FastS
 import Converter.Mpi as Cmpi
+import Converter.PyTree as C
 import Transform.PyTree as T
 import Converter.Internal as Internal
 import KCore.test as test
@@ -22,11 +25,32 @@ myApp.set(numz={"time_step": 0.002,
                 "cfl":0.5})
 
 t,tc = myApp.prepare(FILE, t_out=LOCAL+'/t.cgns', tc_out=LOCAL+'/tc.cgns', expand=3, vmin=11, check=False, NP=Cmpi.size, distrib=True)
+
 cartBase = Internal.getNodeFromName(t,'CARTESIAN')
 Internal._rmNodesFromType(cartBase,'Rind_t')
 test.testT(t,1)
 
-t,tc = myApp.compute(LOCAL+'/t.cgns',LOCAL+'/tc.cgns', t_out=LOCAL+'/restart.cgns', tc_out=LOCAL+'/tc_restart.cgns', nit=NIT)
+tc = C.convertFile2PyTree(LOCAL+'/tc.cgns')
+
+FastC._attributeNoPassTransfer(tc, verbose=0, cutoff=1.e-12)
+
+
+
+time_step= 0.002
+numb={"temporal_scheme": "explicit", "ss_iteration":5, "omp_mode":0}
+numz={"time_step": time_step, "scheme":"roe_min", "time_step_nature":"local", "cfl":0.5}
+FastC._setNum2Base(t, numb); FastC._setNum2Zones(t, numz)
+
+t, tc, metrics = FastS.warmup(t, tc)
+
+time0 = 0.
+for it in range(NIT):
+    FastS._compute(t, metrics, it, tc)
+    time0 += time_step
+
+Internal.createUniqueChild(t, 'Iteration', 'DataArray_t', value=NIT)
+Internal.createUniqueChild(t, 'Time', 'DataArray_t', value=time0)
+
 Internal._rmNodesByName(t, '.Solver#Param')
 Internal._rmNodesByName(t, '.Solver#ownData')
 cartBase = Internal.getNodeFromName(t,'CARTESIAN')
@@ -42,10 +66,3 @@ Internal.addChild(t, cgnslibver, 0)
 ####
 test.testT(t,2)
 
-# Suppress since it doesnt test anything
-#t = T.subzone(t,(1,1,1),(-1,-1,1))
-#for nob in range(len(t[2])):
-#    if t[2][nob][0] != 'CARTESIAN' and t[2][nob][3] == 'CGNSBase_t':
-#        Internal._rmGhostCells(t,t[2][nob],2, adaptBCs=1)
-#    else:
-#        Internal._rmNodesFromType(t[2][nob],'Rind_t')

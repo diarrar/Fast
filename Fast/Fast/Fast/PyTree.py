@@ -5,18 +5,16 @@ import numpy
 
 import FastC.fastc
 import FastS.fasts
-
+ 
 from . import fast
+
 from . import Fast
 __version__ = Fast.__version__
 
 OMP_MODE = 0
 try:
-    import FastC.PyTree as FastC
-    from FastC.PyTree import _setNum2Zones, _setNum2Base, setNum2Zones, setNum2Base, load, \
-        save, loadFile, loadFileG, saveFile, loadTree, saveTree, \
-        getDictOfNobNozOfRcvZones, _addPair, getDictOfNobNozOfDnrZones, _pushCenters, \
-        ramp, _rampTimeStep, _rampCFL, _pushWalls
+    import FastC.PyTree as FastC_Py
+    import FastC.compactTransfers as PACK
 except ImportError:
     raise ImportError("Fast.PyTree: requires FastC module.")
 
@@ -24,11 +22,12 @@ try:
     import Converter.PyTree as C
     import Converter.Internal as Internal
     import FastS.PyTree as FastS
+    from FastC.PyTree import _setNum2Zones, _setNum2Base, setNum2Zones, setNum2Base
+    #import FastS.fasts
     #import FastP.PyTree as FastP
-    import Connector.PyTree as X
     from . import VariablesSharePyTree as VSHARE
 except:
-    raise ImportError("Fast.PyTree: requires Converter, Connector, FastS, FastASLBM modules.")
+    raise ImportError("Fast.PyTree: requires Converter, FastC, FastS, FastASLBM modules.")
 
 FASTLBM = False
 try:
@@ -64,6 +63,27 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
         print("INFOSPLIT initial: Nthread=",Nthread,'Ncache=',Ncache,'NewSplit=',lsplit)
 
     #if lsplit: t,tc = FastP.SplitThreadCache(t, tc, SizeBlockTarget)
+    Re  =-1
+    Lref= 1.
+    nbpts_linelets = 0
+    if tc is not None:
+        base       = Internal.getBases(tc)[0]
+        solverIBC  = Internal.getNodeFromName(base ,'.Solver#IBCdefine')
+        if solverIBC is not None:
+            Re  = Internal.getValue(Internal.getNodeFromName(solverIBC, 'Reref'))
+            Lref= Internal.getValue(Internal.getNodeFromName(solverIBC, 'Lref'))
+            # compute info linelets
+            if Re > 0: #Adaptive method
+              h0, hn, nbpts_linelets = FastS.computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+            elif Re == 0:
+              h0, hn, nbpts_linelets = FastS.computeLineletsInfo2(tc, q=1.1)
+            else: #Alferez' og method
+              h0, nbpts_linelets = 1.e-6, 45
+
+    #bidouille atroce. pourquoi ne pas passer le parametre dans NumBase ou numzone???
+    first = Internal.getNodeFromName1(t, 'NbptsLinelets') 
+    if first is None: Internal.createUniqueChild(t, 'NbptsLinelets', 'DataArray_t', value=nbpts_linelets)
+
 
     #global FastC.FIRST_IT, FastC.HOOK
     # Get omp_mode
@@ -74,30 +94,30 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
         if  node is not None: ompmode = Internal.getValue(node)
 
     # Reordone les zones pour garantir meme ordre entre t et tc
-    FastC._reorder(t, tc)
+    FastC_Py._reorder(t, tc)
 
     # Si version avec FASTLBM
     # Ajout du pas de temps, du temps de relaxation et des niveaux en temps
     # Necessaire avant _buildOwnData puisque stockes dans param_int/param_real
     if FASTLBM:
         FastLBM._setTimeStepAndRelaxTime(t,verbose)
-    FastC._setTimeLevels(t, verbose)
+    FastC_Py._setTimeLevels(t, verbose)
 
     # Construction param_int et param_real des zones
-    FastC._buildOwnData(t, Padding)
+    FastC_Py._buildOwnData(t, Padding)
+    Internal._rmNodesByName(t, 'NbptsLinelets')
 
     #init hook necessaire pour info omp
     tmp   = Internal.getNodeFromName1(t, '.Solver#ownData')
     dtlocPy = Internal.getNodeFromName1(tmp, '.Solver#dtloc')  # noeud
     dtloc   = Internal.getValue(dtlocPy)                       # tab numpy
     nssiter = int(dtloc[0])
-
     zones = Internal.getZones(t)
-    f_it = FastC.FIRST_IT
-    if FastC.HOOK is None: FastC.HOOK = FastC.createWorkArrays__(zones, dtloc, f_it ); FastC.FIRST_IT = f_it
+    f_it = FastC_Py.FIRST_IT
+    if FastC_Py.HOOK is None: FastC_Py.HOOK = FastC_Py.createWorkArrays__(zones, dtloc, f_it ); FastC_Py.FIRST_IT = f_it
 
     # allocation d espace dans param_int pour stockage info openmp
-    FastC._build_omp(t)
+    FastC_Py._build_omp(t)
 
     zones_unstr =[]; zones_str = []; zones_ns = []; zones_lbm = []
     for z in zones:
@@ -131,17 +151,20 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
             metrics_unstr.append(metrics[c])
         c += 1
     # Contruction BC_int et BC_real pour CLa
-    FastC._BCcompact(zones_str)
+    FastC_Py._BCcompact(zones_str)
 
-    #FastC._BCcompactNG(zones_unstr)
+    #FastC_Py._BCcompactNG(zones_unstr)
+
+    # Contruction Conservative_int
+    FastC_Py._Fluxcompact(zones_str)
 
     #determination taille des zones a integrer (implicit ou explicit local)
     #evite probleme si boucle en temps ne commence pas a it=0 ou it=1. ex: range(22,1000)
     #print 'int(dtloc[0])= ', int(dtloc[0])
     if len(zones_str) != 0:
         for nstep in range(1, int(dtloc[0])+1):
-            hook1       = FastC.HOOK.copy()
-            hook1.update(FastC.fastc.souszones_list(zones_str, metrics_str, FastC.HOOK, 1, nstep, verbose) )
+            hook1       = FastC_Py.HOOK.copy()
+            hook1.update(FastC.fastc.souszones_list(zones_str, metrics_str, FastC_Py.HOOK, 1, nstep, verbose) )
 
     #init metric
     FastC.fastc.init_metric(zones_str  , metrics_str  , hook1)
@@ -152,10 +175,10 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     adjoint=Adjoint
 
     #print("avant primVavn resolved ", flush=True)
-    t, FastC.FIRST_IT, zones2compact = FastC.createPrimVars(t, ompmode, rmConsVars, adjoint, lbmAJ=False)
-    FastC.HOOK['FIRST_IT']= FastC.FIRST_IT
+    t, FastC_Py.FIRST_IT, zones2compact = FastC_Py.createPrimVars(t, ompmode, rmConsVars, adjoint, lbmAJ=False)
+    FastC_Py.HOOK['FIRST_IT']= FastC_Py.FIRST_IT
 
-    if len(zones_str) == 0: hook1 = FastC.HOOK.copy(); hook1.update( {'lexit_lu':0, 'lssiter_verif':0})
+    if len(zones_str) == 0: hook1 = FastC_Py.HOOK.copy(); hook1.update( {'lexit_lu':0, 'lssiter_verif':0})
 
     #compactage des champs en fonction option de calcul
     count = -1
@@ -166,7 +189,7 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
         varnames= data[1]
         for fields in varnames:
             #print("compact", fields)
-            FastC._compact(zone, fields=fields, mode=count, dtloc=dtlocPy)
+            FastC_Py._compact(zone, fields=fields, mode=count, dtloc=dtlocPy)
     for z in zones_unstr:
         _compact(zone, fields=None, mode=count, ParentElements=True)
 
@@ -179,7 +202,7 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     # init Q variables from macro variable if lbm et creation noeud pipeau density_P1 pour transfert
     flag_initprecise = 1
     if FASTLBM:
-        FastLBM._init_Q(t, FastC.HOOK, flag_initprecise)
+        FastLBM._init_Q(t, FastC_Py.HOOK, flag_initprecise)
 
     #print("apres initQ", flush=True)
     #allocate tab ssor en structure
@@ -187,9 +210,9 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     metrics_str = infos_zones["struct"][1]
     ssors = FastS.fasts.allocate_ssor(zones_str, metrics_str, hook1)
 
-    #corection pointeur ventijk si ale=0: pointeur Ro perdu par compact.
+    # correction pointeur ventijk si ale=0: pointeur Ro perdu par compact.
     c   = 0
-    ale = False
+    ale = 0
     for z in zones:
         motion = 'none'
         b = Internal.getNodeFromName2(z, 'motion')
@@ -198,42 +221,107 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
             sol = Internal.getNodeFromName1(z, 'FlowSolution#Centers')
             ro = Internal.getNodeFromName1(sol, 'Density')
             metrics[c][2] = ro[1]
-        else: ale = True
+        elif motion == 'rigid': ale = 1
+        elif motion == 'rigid_ext': ale = 2
+        elif motion == 'deformation': ale = 3
+        else: raise ValueError('warmup: invalid value for motion.')
         c += 1
-
     #
     # mise a jour vitesse entrainememnt
     #
-    if ale and infos_ale is not None:
+    if ale == 1 and infos_ale is not None:
         print("ale actif. Teta et tetap=", infos_ale)
         teta = infos_ale[0];  tetap = infos_ale[1]
-        FastC._motionlaw(t, teta, tetap)
-        if len(zones_str) != 0: FastS.fasts.computePT_velocity_ale(zones_str,  metrics_str, FastC.HOOK, ompmode)
+        FastC_Py._motionlaw(t, teta, tetap)
+        if len(zones_str) != 0: FastS.fasts.computePT_velocity_ale(zones_str,  metrics_str)
         #if len(zones_unstr) != 0: print("coder fastp.computePT_velocity_ale(zones_unstr,  metrics_unstr")
+    elif ale == 2:
+        first = Internal.getNodeFromName1(t, 'Time')
+        if first is not None: time = Internal.getValue(first)
+        else: time = 0.
+        R._evalPosition(t, time)
+        R._evalGridSpeed(t, time)
+        if len(zones_str) != 0: FastS.fasts.computePT_velocity_ale(zones_str,  metrics_str)
+    elif ale == 3:
+        # force init (provisoire)
+        first = Internal.getNodeFromName1(t, 'Time')
+        if first is not None: time = Internal.getValue(first)
+        else: time = 0.
+        R._evalPosition(t, time)
+        R._evalGridSpeed(t, time)
+        # end force
+        if len(zones_str) != 0: FastS.fasts.computePT_velocity_ale(zones_str,  metrics_str)
     #
     # Compactage arbre transfert et mise a jour FastC.HOOK
     #
     if tc is not None:
-        X.miseAPlatDonorTree__( t, tc, graph=graph, list_graph=list_graph)
-
-        FastC.HOOK['param_int_tc'] = Internal.getNodeFromName1( tc, 'Parameter_int' )[1]
-        param_real_tc = Internal.getNodeFromName1( tc, 'Parameter_real')
-        if param_real_tc is not None: FastC.HOOK['param_real_tc']= param_real_tc[1]
-
-
         # Add linelets arrays in the FastC.HOOK for ODE-based WallModel (IBC)
-        nbpts_linelets = 45
-        #FastS._createTBLESA(tc,nbpts_linelets)
-        FastS._createTBLESA(tc, h0=0.01, hn=-1, nbpts_linelets=nbpts_linelets)
+        if solverIBC is not None:
+          if Re > 0: #Adaptive method
+              # h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+              FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+              FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+          elif Re == 0:
+              # h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
+              FastS._createTBLESA(tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+              FastS._createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+          else: #Alferez' og method
+              # h0, nbpts_linelets = 1.e-6, 45
+              FastS._createTBLESA(tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+              FastS._createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+
+        Nbpass = 1
+        for z in Internal.getZones(tc):
+          subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+          for s in subRegions:
+            if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2  
+            elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3  
+            elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4  
+            elif s[0][-6:]== '_pass5' and Nbpass<=4: Nbpass=5  
+            elif s[0][-6:]== '_pass6' and Nbpass<=5: Nbpass=6  
+            elif s[0][-6:]== '_pass7' and Nbpass<=6: Nbpass=7  
+            elif s[0][-6:]== '_pass8' and Nbpass<=7: Nbpass=8  
+            elif s[0][-6:]== '_pass9' and Nbpass<=8: Nbpass=9  
+            elif s[0][-7:]== '_pass10' and Nbpass<=9: Nbpass=10 
+           
+        #test pour savoir si graph est une liste de dictionnaires (explicite local)
+        #ou juste un dictionnaire (explicite global, implicite)
+        if isinstance(graph, list): graphLoc=graph[0]
+        else: graphLoc=graph
+
+        for nOpass in range(1,Nbpass+1):
+          if (Nbpass==1): FilterPass=None
+          else:           FilterPass='pass'+str(nOpass)
+
+          if graphLoc is None:
+            graphpassLoc =None
+            procDictLoc  =None
+          else:
+            graphpassLoc = graphLoc['graphPass'+str(nOpass)] 
+            procDictLoc  = graphLoc['procDict']
+          PACK.miseAPlatDonorTree__(t, tc, graph=graphpassLoc, procDict=procDictLoc, nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
+
+          tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
+          key = 'param_int_tc'+str(nOpass)
+          FastC_Py.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
+          param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
+          key = 'param_real_tc'+str(nOpass)
+          if param_real_tc is not None: FastC_Py.HOOK[key] = param_real_tc[1]
+          else: FastC_Py.HOOK[key] = None
+
     else:
-        FastC.HOOK['param_real_tc'] = None
-        FastC.HOOK['param_int_tc']  = None
+        Nbpass=0
+        FastC_Py.HOOK['param_real_tc1'] = None
+        FastC_Py.HOOK['param_int_tc1']  = None
+
+    #sauvegarde nbr passes transfert
+    dtloc[12]=Nbpass
 
 
     if ssors is not []:
-        FastC.HOOK['ssors'] = ssors
+        FastC_Py.HOOK['ssors'] = ssors
     else:
-        FastC.HOOK['ssors'] = None
+        FastC_Py.HOOK['ssors'] = None
 
 
     # Compactage arbre moyennes stat
@@ -242,7 +330,7 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
         var = Internal.getNodesFromType1(sol[0], 'DataArray_t')
         varmy = []
         for v in var: varmy.append('centers:'+v[0])
-        FastC._compact(tmy, fields=varmy)
+        FastC_Py._compact(tmy, fields=varmy)
 
     #
     # remplissage ghostcells
@@ -253,28 +341,29 @@ def warmup(t, tc=None, graph=None, infos_ale=None, Adjoint=False, tmy=None, list
     #Determine variables a trasferer
     if len( infos_zones["LBM"][0]) ==0:
         # CALCUL FULL NS ==> on ne transfere que les variables macros
-        vars=FastC.varsN
+        vars=FastC_Py.varsN
     elif len( infos_zones["NS"][0]) ==0 and len( infos_zones["unstruct"][0]) ==0:
         #CALCUL FULL LBM ==> on transfere les macros et les distributions
-        vars=FastC.varsN + FastC.varsMLBM
+        vars=FastC_Py.varsN + FastC_Py.varsMLBM
     else:
         #Couplage NSLBM : on transfere les macro, les distributions et les gradients
         print("\n#------------Simulation couplee NS-LBM------------#")
         print('Nombre de zones LBM:',len(infos_zones['LBM'][0]))
         print('Nombre de zones NS:',len(infos_zones['NS'][0]))
         print('')
-        vars = FastC.varsN + FastC.varsMLBM + FastC.varsS
+        vars = FastC_Py.varsN + FastC_Py.varsMLBM + FastC_Py.varsS
 
     nstep            = 0
     nitrun           = 0
 
     # creation/init data dans param_int/real  pour interp temporelle LBM/NS et LBM/LBM
-    init_interp = FastC._InterpTemporelcompact(t,tc)
+    init_interp = FastC_Py._InterpTemporelcompact(t,tc)
     if FASTLBM:
         if not init_interp: FastLBM.fastaslbm.interp_temporel(zones, 1,1,-10)
 
+
     # data pour interp temporel couplage NS/LBM
-    hook1 = FastC.HOOK.copy(); hook1.update( {'lexit_lu':0, 'lssiter_verif':0})
+    hook1 = FastC_Py.HOOK.copy(); hook1.update( {'lexit_lu':0, 'lssiter_verif':0})
 
     #overset A basculer dans l'arbre pour eviter test systematique donnee statique
     overset = 0
@@ -385,7 +474,7 @@ def _compact(t, containers=[Internal.__FlowSolutionNodes__, Internal.__FlowSolut
         else:
             opt = 0
             ztype = Internal.getValue(Internal.getNodeFromName(z, 'ZoneType'))
-            ars   = FastC.getFields2Compact__(z, containers, fields)
+            ars   = FastC_Py.getFields2Compact__(z, containers, fields)
             sh    = None ; size = None
             val   = [] # valid fields
             for a in ars:
@@ -430,13 +519,12 @@ def _fillGhostcells(zones, tc, infos_zones, timelevel_target, vars, nstep, ompmo
 
         #transfert
         if tc is not None :
-            tc_compact = Internal.getNodeFromName1( tc, 'Parameter_real')
-            #Si param_real n'existe pas, alors pas de raccord dans tc
-            if tc_compact is not  None:
+            firstpass  = Internal.getNodeFromName1( tc, 'Pass1')
+            if firstpass is not None:
+                param_real= Internal.getNodeFromName1( firstpass, 'Parameter_real')[1]
+                param_int = Internal.getNodeFromName1( firstpass, 'Parameter_int' )[1]
 
                 couplageNSLBM = 0
-                param_real    = tc_compact[1]
-                param_int     = Internal.getNodeFromName1(tc, 'Parameter_int' )[1]
                 zonesD        = Internal.getZones(tc)
 
                 #-----------------------------------------------------------------
@@ -467,7 +555,6 @@ def _fillGhostcells(zones, tc, infos_zones, timelevel_target, vars, nstep, ompmo
 
                 type_transfert = 2  # 0= ID uniquement, 1= IBC uniquement, 2= All
                 no_transfert   = 1  # dans la list des transfert point a point
-                isWireModel_int= 0
                 #print("var", vars, varType)
 
                 #t3 = C.newPyTree(['Base', zones])
@@ -476,7 +563,13 @@ def _fillGhostcells(zones, tc, infos_zones, timelevel_target, vars, nstep, ompmo
 
                 nstep_loc = nstep
                 if nstep==0: nstep_loc=1
-                X.connector.___setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, varType, type_transfert, no_transfert, nstep_loc, nitmax, rk, exploc, num_passage, isWireModel_int)
+                for npass in range(dtloc[12]):
+                   passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass+1))
+                   param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
+                   param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+
+                   print('Nopass', npass+1, vars)
+                   FastC.fastc.___setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, varType, no_transfert, nstep_loc, nitmax, rk, exploc, num_passage)
 
                 #if couplageNSLBM==1 and nstep !=0 : fast.recuplbmns_(zones, zonesD, param_int, param_real, hook1, nitmax, 0, nstep_loc, ompmode, 1, 0)
 
@@ -552,8 +645,8 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1):
 
         for nstep in range(1, nitmax+1): # pas RK ou ssiterations
 
-            hook1 = FastC.HOOK.copy()
-            hook1.update(  FastC.fastc.souszones_list(zones, metrics, FastC.HOOK, nitrun, nstep, 0) )
+            hook1 = FastC_Py.HOOK.copy()
+            hook1.update(  FastC.fastc.souszones_list(zones, metrics, FastC_Py.HOOK, nitrun, nstep, 0) )
 
             skip      = 0
             if hook1["lssiter_verif"] == 0 and nstep == nitmax and itypcp ==1: skip = 1
@@ -596,17 +689,17 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1):
                 #if flag_NSLBM==1: fast.interplbmns_(zones,zones_tc,param_int_tc,param_real_tc,hook1,nitmax,nitrun,nstep,ompmode,1,dest)
                 #if flag_NSLBM==1: fast.interplbmns_(zones,zones_tc,param_int_tc,param_real_tc,hook1,nitmax,nitrun,nstep,1,dest)
 
-                varsNS = FastC.varsP
-                if nstep%2 == 0 and itypcp == 2 : varsNS = FastC.varsN  # Choix du tableau pour application transfer et BC
+                varsNS = FastC_Py.varsP
+                if nstep%2 == 0 and itypcp == 2 : varsNS = FastC_Py.varsN  # Choix du tableau pour application transfer et BC
 
                 #Definition de vars pour la fonction qui realise les transfert
                 if   len(infos_zones['LBM'][0])==0: vars = varsNS                         # full NS
                 elif len(infos_zones['NS'][0] )==0:                                        # full LBM
-                    vars = FastC.varsN + FastC.varsPLBM                                   # LBM match
+                    vars = FastC_Py.varsN + FastC_Py.varsPLBM                                   # LBM match
                     if hook1["neq_max"] == 19 and overset==1 :                            # LBM avec Overset
-                        vars = FastC.varsN + FastC.varsPLBM + FastC.varsS + FastC.varsPSI
+                        vars = FastC_Py.varsN + FastC_Py.varsPLBM + FastC_Py.varsS + FastC_Py.varsPSI
                 else:
-                    vars = varsNS + FastC.varsPLBM + FastC.varsS
+                    vars = varsNS + FastC_Py.varsPLBM + FastC_Py.varsS
 
                 timelevel_target = int(dtloc[4])
 
@@ -630,10 +723,10 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1):
         nit_c     = NIT
 
         if tc is None:
-            FastC.HOOK['param_int_tc']  = None
-            FastC.HOOK['param_real_tc'] = None
+            FastC_Py.HOOK['param_int_tc']  = None
+            FastC_Py.HOOK['param_real_tc'] = None
 
-        fast._computePT(zones, metrics, nitrun, nstep_deb, nstep_fin, layer_mode, nit_c , flag_NSLBM,  FastC.HOOK)
+        fast._computePT(zones, metrics, nitrun, nstep_deb, nstep_fin, layer_mode, nit_c , flag_NSLBM,  FastC_Py.HOOK)
 
 
 
@@ -645,17 +738,17 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1):
     #switch pointer a la fin du pas de temps
     if exploc == 1 and tc is not None:
         if layer == 'Python':
-            FastC.switchPointers__(zones_ns, 1, 3)
+            FastC_Py.switchPointers__(zones_ns, 1, 3)
         else:
-            FastC.switchPointers3__(zones_ns,nitmax)
+            FastC_Py.switchPointers3__(zones_ns,nitmax)
     else:
         case = NIT%3
-        if case != 0 and itypcp < 2: FastC.switchPointers__(zones_ns, case)
-        if case != 0 and itypcp ==2: FastC.switchPointers__(zones_ns, case, nitmax%2+2)
+        if case != 0 and itypcp < 2: FastC_Py.switchPointers__(zones_ns, case)
+        if case != 0 and itypcp ==2: FastC_Py.switchPointers__(zones_ns, case, nitmax%2+2)
 
     if FASTLBM:
         if  NIT%2 != 0:
-            FastC.switchPointersLBM__(zones_lbm, dtloc)
+            FastC_Py.switchPointersLBM__(zones_lbm, dtloc)
 
     maxlevel   = dtloc[9]
     nitCyclLBM = 2**(maxlevel-1)
@@ -664,8 +757,8 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1):
 
 
     # flag pour derivee temporelle 1er pas de temps implicit
-    FastC.HOOK["FIRST_IT"]  = 1
-    FastC.FIRST_IT          = 1
+    FastC_Py.HOOK["FIRST_IT"]  = 1
+    FastC_Py.FIRST_IT          = 1
 
     return None
 
@@ -864,7 +957,7 @@ def prepare_interpolation(t,tc):
     dim_tabinterp = 5*3*nb_rac_tot*size_max
     print('Dim Tab interp NS/LBM temporel:',dim_tabinterp)
     tab_interp = numpy.empty(dim_tabinterp, dtype=numpy.float64)
-    FastC.HOOK['tab_interp'] = tab_interp
+    FastC_Py.HOOK['tab_interp'] = tab_interp
 
     return None
 

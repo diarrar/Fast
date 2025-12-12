@@ -23,12 +23,12 @@
 #include "CMP/include/pending_message_container.hpp"
 #include "CMP/include/recv_buffer.hpp"
 #include "CMP/include/send_buffer.hpp"
-#include "setInterpTransfersD.h"
+#include "FastC/TRANSFERT/setInterpTransfersD.h"
 typedef typename CMP::PendingMsgContainer<CMP::RecvBuffer> RecvQueue;
 typedef typename CMP::PendingMsgContainer<CMP::SendBuffer> SendQueue;
 #endif
 
-# include "connector.h"
+//# include "connector.h"
 # include "kcore.h"
 # include "FastS/Fortran.h"
 //# include "Zone.h"
@@ -145,10 +145,10 @@ namespace K_FASTS
     E_Float**  iptvol_df, 
     E_Float**  iptventi, E_Float**  iptventj, E_Float** iptventk,  
     E_Float**& iptrdm,
-    E_Float*   iptroflt      , E_Float*  iptroflt2        , E_Float*   iptwig         , E_Float* iptstat_wig       ,
-    E_Float*   iptdrodm      , E_Float*  iptcoe           , E_Float* iptmules         , E_Float**& iptdelta        , E_Float**& iptro_res    , E_Float**& iptdrodm_trans  ,
-    E_Int*&  ipt_param_int_tc, E_Float*& ipt_param_real_tc, E_Int*& ipt_linelets_int  , E_Float*& ipt_linelets_real,
-    E_Int& taille_tabs       , E_Float*& stock            , E_Float*& drodmstock      , E_Float*& constk           , E_Float**  iptsrc);
+    E_Float*   iptroflt      , E_Float*  iptroflt2        , E_Float*   iptwig         , E_Float* iptstat_wig        ,
+    E_Float*   iptdrodm      , E_Float*  iptcoe           , E_Float* iptmules         , E_Float**& iptdelta         , E_Float**& iptro_res    , E_Float**& iptdrodm_trans  ,
+    E_Int** int_tc           , E_Float** real_tc          , E_Int*& ipt_linelets_int  , E_Float*& ipt_linelets_real ,
+    E_Int& taille_tabs       , E_Float*& stock            , E_Float*& drodmstock      , E_Float*& constk            , E_Float**  iptsrc);
 
 
   //=============
@@ -160,7 +160,7 @@ namespace K_FASTS
     E_Int& nidom        , E_Int& nitrun       , E_Int& nstep    , E_Int& nssiter , E_Int& it_target , E_Int& first_it,
     E_Int& kimpli       , E_Int& lssiter_verif, E_Int& lexit_lu , E_Int& omp_mode, E_Int& layer_mode, E_Int& mpi,
     E_Int& nisdom_lu_max, E_Int& mx_nidom     , E_Int& ndimt_flt,
-    E_Int& threadmax_sdm, E_Int& mx_synchro, 
+    E_Int& threadmax_sdm, E_Int& mx_synchro   , E_Int* dtloc, 
     E_Int& nb_pulse     ,
     E_Float& temps,
     E_Int* ipt_ijkv_sdm , 
@@ -183,7 +183,7 @@ namespace K_FASTS
     E_Float*   iptroflt, E_Float*  iptroflt2, E_Float*   iptwig, E_Float* iptstat_wig,
     E_Float*   iptdrodm, E_Float*  iptcoe   , E_Float* iptmules, E_Float**& iptdelta, E_Float**& iptro_res,
     E_Float**& iptdrodm_trans,
-    E_Int*&    ipt_param_int_tc , E_Float*& ipt_param_real_tc, E_Int*& ipt_linelets_int, E_Float*& ipt_linelets_real);
+    E_Int**    int_tc        , E_Float** real_tc, E_Int*& ipt_linelets_int, E_Float*& ipt_linelets_real);
 
 
   //==============================

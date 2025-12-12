@@ -425,7 +425,7 @@ E_Int K_FASTS::BCzone(
                                     iptx, ipty, iptz, ipventijk, iptijk, iptrop, iptmut, ipt_data_loc);
         }
 /*
-        else if (bc_type == BCFLUXOCTREE_C && idir==1 && nstep !=1 )
+        else if (bc_type == BCFluxOctreeC && idir==1 && nstep !=1 )
         { 
           //printf("OCTREEBC nd %d , idir %d , fen  %d %d \n",nd, idir, ipt_ind_CL[2]+1,ipt_ind_CL[3]+1,   iptsize_data[0]);
            E_Int v2 =  iptsize_data[0]/10;
@@ -434,9 +434,11 @@ E_Int K_FASTS::BCzone(
            E_Float c7   = (c4-c5)*c0;
 
            E_Int v1 = param_int[NDIMDX];
-          for (E_Int j =ipt_ind_CL[2]+1; j <= ipt_ind_CL[3]+1; j++)
+          for (E_Int k =ipt_ind_CL[4]; k <= ipt_ind_CL[5]; k++)
+          for (E_Int j =ipt_ind_CL[2]; j <= ipt_ind_CL[3]; j++)
             {
-              E_Int l  = 1 + j*param_int[NIJK];
+            {
+              E_Int l  = 1+  (k+1)*param_int[NIJK]*param_int[NIJK+1] + (j+1)*param_int[NIJK];
               E_Int li = j-ipt_ind_CL[2]-1;
 
               //printf("slp Av  %f %f %f %f %d %d  %f\n",iptrop[l],iptrop[l +v1], iptrop[l +v1*2],iptrop[l +v1*4],j-ipt_ind_CL[2]-1,iptsize_data[0],slp1[li]); 
@@ -446,17 +448,26 @@ E_Int K_FASTS::BCzone(
               ////iptrop[l +v1*3]=  ( slp1[ li +v2*3] - c4*iptrop[l+1 +v1*3] - c6*iptrop[l+2 +v1*3] )/c5;
               //iptrop[l +v1*4]=  ( slp1[ li +v2*4] - c4*iptrop[l+1 +v1*4] - c6*iptrop[l+2 +v1*4] )/c5;
               //printf("slp AP  %f %f %f %f  \n",iptrop[l], iptrop[l +v1], iptrop[l +v1*2],iptrop[l +v1*4] ); 
-              //(slp1[ j-ipt_ind_CL[2]-1 ] - c4*rop(l +vslp) -c6 rop(np +vslp))/c5 = rop(nm  +vslp) ;
+              //(slp1[ j-ipt_ind_CL[2]-1 ] - c4*rop(l +vslp) 
+              //-c6 rop(np +vslp))/c5 = rop(nm  +vslp) ;
+              //
 
-              //iptrop[l      ]= c7*(iptrop[l+2      ] -iptrop[l+1      ] ) + iptrop[l+2      ];
-              //iptrop[l +v1  ]= c7*(iptrop[l+2 +v1  ] -iptrop[l+1 +v1  ] ) + iptrop[l+2 +v1  ];
-              //iptrop[l +v1*2]= c7*(iptrop[l+2 +v1*2] -iptrop[l+1 +v1*2] ) + iptrop[l+2 +v1*2];
-              //iptrop[l +v1*3]= c7*(iptrop[l+2 +v1*3] -iptrop[l+1 +v1*3] ) + iptrop[l+2 +v1*3];
-              //iptrop[l +v1*4]= c7*(iptrop[l+2 +v1*4] -iptrop[l+1 +v1*4] ) + iptrop[l+2 +v1*4];
+              //iptrop[l      ]= c7*(iptrop[l+2      ] -iptrop[l+1      ] ) + iptrop[l+3      ];
+              //iptrop[l +v1  ]= c7*(iptrop[l+2 +v1  ] -iptrop[l+1 +v1  ] ) + iptrop[l+3 +v1  ];
+              //iptrop[l +v1*2]= c7*(iptrop[l+2 +v1*2] -iptrop[l+1 +v1*2] ) + iptrop[l+3 +v1*2];
+              //iptrop[l +v1*3]= c7*(iptrop[l+2 +v1*3] -iptrop[l+1 +v1*3] ) + iptrop[l+3 +v1*3];
+              //iptrop[l +v1*4]= c7*(iptrop[l+2 +v1*4] -iptrop[l+1 +v1*4] ) + iptrop[l+3 +v1*4];
               //iptrop[l      ]= 0.5*(iptrop[l-1      ]+iptrop[l+1      ]);
               //iptrop[l +v1  ]= 0.5*(iptrop[l-1 +v1  ]+iptrop[l+1 +v1  ]);
               //iptrop[l +v1*2]= 0.5*(iptrop[l-1 +v1*2]+iptrop[l+1 +v1*2]);
+              //iptrop[l +v1*3]= 0.5*(iptrop[l-1 +v1*3]+iptrop[l+1 +v1*3]);
               //iptrop[l +v1*4]= 0.5*(iptrop[l-1 +v1*4]+iptrop[l+1 +v1*4]);
+              //iptrop[l      ]= iptrop[l+1      ];
+              //iptrop[l +v1  ]= iptrop[l+1 +v1  ];
+              //iptrop[l +v1*2]= iptrop[l+1 +v1*2];
+              //iptrop[l +v1*3]= iptrop[l+1 +v1*3];
+              //iptrop[l +v1*4]= iptrop[l+1 +v1*4];
+            }
             }
         }
 */

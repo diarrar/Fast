@@ -6,7 +6,7 @@ import RigidMotion.PyTree as R
 import Generator.PyTree as G
 import Transform.PyTree as T
 import FastS.PyTree as FastS
-import Fast.PyTree as Fast
+import FastC.PyTree as FastC
 import Converter.Mpi as Cmpi
 import KCore.test as test
 import numpy
@@ -94,7 +94,7 @@ R._copyGrid2GridInit(tc)
 numb={"temporal_scheme":"implicit_local", "ss_iteration":20, "omp_mode":0, "modulo_verif":10}
 numz={"time_step": 8.e-3, "epsi_newton":0.01, "scheme":"ausmpred", "slope":"o3", "DES": "zdes2", "SA_add_RotCorr":True}
 
-Fast._setNum2Zones(t, numz); Fast._setNum2Base(t, numb)
+FastC._setNum2Zones(t, numz); FastC._setNum2Base(t, numb)
 
 time_step = Internal.getNodeFromName(t, 'time_step')
 time_step = Internal.getValue(time_step)
@@ -123,7 +123,7 @@ tBB = Cmpi.createBBoxTree(t)
 intersectionDict={}
 for z1 in Internal.getZones(Internal.getNodeFromName1(tBB, 'CYL')):
     for z2 in Internal.getZones(Internal.getNodeFromName1(tBB, 'FOND')):
-        Fast._addPair(intersectionDict, z1[0], z2[0])
+        FastC._addPair(intersectionDict, z1[0], z2[0])
 
 procDict=None; graphX={}
 procDict = Cmpi.getProcDict(tBB)
@@ -132,9 +132,9 @@ graphX = Cmpi.computeGraph(tBB, type='bbox2', t2=None,
                            intersectionsDict=intersectionDict)
 
 dictOfADT={}
-(dictOfNobOfRcvZones,dictOfNozOfRcvZones)   = Fast.getDictOfNobNozOfRcvZones(t, intersectionDict)
-(dictOfNobOfRcvZonesC,dictOfNozOfRcvZonesC) = Fast.getDictOfNobNozOfRcvZones(tc, intersectionDict)
-(dictOfNobOfDnrZones,dictOfNozOfDnrZones)   = Fast.getDictOfNobNozOfDnrZones(tc, intersectionDict, dictOfADT)
+(dictOfNobOfRcvZones,dictOfNozOfRcvZones)   = FastC.getDictOfNobNozOfRcvZones(t, intersectionDict)
+(dictOfNobOfRcvZonesC,dictOfNozOfRcvZonesC) = FastC.getDictOfNobNozOfRcvZones(tc, intersectionDict)
+(dictOfNobOfDnrZones,dictOfNozOfDnrZones)   = FastC.getDictOfNobNozOfDnrZones(tc, intersectionDict, dictOfADT)
 
 time = 0
 

@@ -148,9 +148,6 @@ else:
 FastC._setNum2Zones(t, numz)
 FastC._setNum2Base(t, numb)
 
-#C.convertPyTree2File(tc, "tc.cgns")
-#C.convertPyTree2File(t ,"mesh.cgns")
-
 Internal._rmNodesByName(t,"FlowSolution")
 
 (t, tc, metrics) = FastS.warmup(t, tc)
@@ -161,9 +158,8 @@ Internal._rmNodesFromName(t1, 'Parameter_int')
 Internal._rmNodesFromName(t1, 'Parameter_real')
 Internal._rmNodesFromName(t1, '.Solver#dtloc')
 test.testT(t1, 2)
-Internal._rmNodesFromName(t1c, 'Parameter_int')
+#Internal._rmNodesFromName(t1c, 'Parameter_int')
 test.testT(t1c, 3)
-#C.convertPyTree2File(t, "Postout.cgns")
 
 nit = 100
 for it in range(nit):
@@ -176,4 +172,3 @@ Internal._rmNodesFromName(t, 'Parameter_int')
 Internal._rmNodesFromName(t, 'Parameter_real')
 Internal._rmNodesFromName(t, '.Solver#dtloc')
 test.testT(t, 1)
-#C.convertPyTree2File(t, "out.cgns")

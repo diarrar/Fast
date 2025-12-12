@@ -24,12 +24,16 @@
 // ============================================================================
 static PyMethodDef Pyfastc [] =
 {
-  {"_motionlaw"          , K_FASTC::_motionlaw          ,  METH_VARARGS},
-  {"PygetRange"          , K_FASTC::PygetRange          ,  METH_VARARGS},
-  {"souszones_list"      , K_FASTC::souszones_list      ,  METH_VARARGS},
-  {"init_metric"         , K_FASTC::init_metric         ,  METH_VARARGS},
-  {"initNuma"            , K_FASTC::initNuma            ,  METH_VARARGS},
-  {"distributeThreads"   , K_FASTC::distributeThreads   ,  METH_VARARGS},
+  {"_motionlaw"                 , K_FASTC::_motionlaw          ,  METH_VARARGS},
+  {"PygetRange"                 , K_FASTC::PygetRange          ,  METH_VARARGS},
+  {"souszones_list"             , K_FASTC::souszones_list      ,  METH_VARARGS},
+  {"init_metric"                , K_FASTC::init_metric         ,  METH_VARARGS},
+  {"initNuma"                   , K_FASTC::initNuma            ,  METH_VARARGS},
+  {"initNumaTransfer"           , K_FASTC::initNumaTransfer    ,  METH_VARARGS},
+  {"distributeThreads"          , K_FASTC::distributeThreads       , METH_VARARGS},
+  {"___setInterpTransfers"      , K_FASTC::___setInterpTransfers   , METH_VARARGS},
+  {"__setInterpTransfersD"      , K_FASTC::__setInterpTransfersD   , METH_VARARGS},
+  {"_updateNatureForIBMGhost"   , K_FASTC::_updateNatureForIBMGhost, METH_VARARGS},
   {NULL, NULL}
 };
 

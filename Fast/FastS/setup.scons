@@ -29,9 +29,6 @@ installPath = Dist.getInstallPath(prefix)
 # Test if xcore exists ======================================================
 (xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkXCore()
 
-# Test if connector exists ==================================================
-(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkConnector()
-
 # Test if fast exists =======================================================
 (fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkFastC()
 
@@ -41,9 +38,9 @@ installPath = Dist.getInstallPath(prefix)
 from KCore.config import *
 
 # Setting libraryDirs and libraries ===========================================
-libraryDirs = ['..', '.', pythonLibDir, kcoreLibDir, xcoreLibDir, fastcLibDir, connectorLibDir]
-includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, connectorIncDir, pythonIncDir, fastcIncDir]
-libraries = ["kcore", "xcore", "fastc", "connector"]
+libraryDirs = ['..', '.', pythonLibDir, kcoreLibDir, xcoreLibDir, fastcLibDir]
+includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, pythonIncDir, fastcIncDir]
+libraries = ["kcore", "xcore", "fastc"]
 (ok, libs, paths) = Dist.checkFortranLibs([], additionalLibPaths)
 libraryDirs += paths; libraries += libs
 (ok, libs, paths) = Dist.checkCppLibs([], additionalLibPaths)

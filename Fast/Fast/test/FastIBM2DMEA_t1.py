@@ -1,4 +1,4 @@
-import Fast.PyTree as Fast
+import FastC.PyTree as FastC
 import FastS.PyTree as FastS
 import Fast.FastIBM as FastIBM
 import Converter.Internal as Internal
@@ -74,7 +74,9 @@ numz["cfl"]                = 5.
 numz["scheme"]             = "roe"
 
 it0 = 0.; time0 = 0.
-Fast._setNum2Base(t, numb); Fast._setNum2Zones(t, numz)
+FastC._setNum2Base(t, numb); FastC._setNum2Zones(t, numz)
+
+FastC._attributeNoPassTransfer(tc, cutoff=5.e-10, verbose=0)
 
 t, tc, metrics = FastS.warmup(t, tc)
 
@@ -90,6 +92,13 @@ Internal._rmNodesByName(tc, '.Solver#Param')
 Internal._rmNodesByName(tc, '.Solver#ownData')
 
 test.testT(t , 4)
+
+#On remets les noms de noeud oldschool
+for z in Internal.getZones(tc):
+    subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+    for s in subRegions:
+      s[0]=s[0][0:-6]
+
 test.testT(tc, 5)
 
 ##POST

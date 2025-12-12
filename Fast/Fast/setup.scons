@@ -29,9 +29,6 @@ installPath = Dist.getInstallPath(prefix)
 # Test if xcore exists =======================================================
 (xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkXCore()
 
-# Test if connector exists ==================================================
-(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkConnector()
-
 # Test if fastc exists =====================================================
 (fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkFastC()
 
@@ -51,9 +48,9 @@ installPath = Dist.getInstallPath(prefix)
 from KCore.config import *
 
 # Setting libraryDirs and libraries ===========================================
-libraryDirs = ['..', '.', pythonLibDir, kcoreLibDir, xcoreLibDir, connectorLibDir, fastcLibDir, fastsLibDir]
-includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, connectorIncDir, pythonIncDir, fastcIncDir, fastsIncDir]
-libraries = ["fastc", "fasts", "connector", "xcore", "kcore"]
+libraryDirs = ['..', '.', pythonLibDir, kcoreLibDir, xcoreLibDir, fastcLibDir, fastsLibDir]
+includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, pythonIncDir, fastcIncDir, fastsIncDir]
+libraries = ["fastc", "fasts", "xcore", "kcore"]
 #libraryDirs += [fastaslbmLibDir]
 #includeDirs += [fastaslbmIncDir]
 #libraries += ["fastaslbm"]

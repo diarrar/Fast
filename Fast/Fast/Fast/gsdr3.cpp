@@ -5,7 +5,6 @@
 # include "FastC/fastc.h"
 # include "Fast/fast.h"
 # include "Fast/param_solver.h"
-# include "connector.h"
 # include <string.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -58,8 +57,8 @@ E_Int K_FAST::gsdr3(E_Int**& param_int          , E_Float**& param_real       , 
 		    E_Float**& iptrdm           , E_Float*   iptroflt         , E_Float*   iptroflt2        , E_Float*  iptgrad       ,
 		    E_Float*  iptwig            , E_Float*   iptstat_wig      , E_Float* iptflu             , E_Float*   iptdrodm     ,
 		    E_Float*   iptcoe           , E_Float*  iptrot            , E_Float**& iptdelta         , E_Float**& iptro_res    ,
-		    E_Float**& iptdrodm_transfer, E_Int*&    param_int_tc     , E_Float*& param_real_tc     , E_Int*& linelets_int    ,
-		    E_Float*& linelets_real     , E_Int&     taille_tabs      , E_Float*& stock             , E_Float*& drodmstock    ,
+		    E_Float**& iptdrodm_transfer, E_Int** int_tc              , E_Float** real_tc           ,
+                    E_Int*& linelets_int        , E_Float*& linelets_real     , E_Int&     taille_tabs      , E_Float*& stock             , E_Float*& drodmstock    ,
 		    E_Float*& constk            , E_Float** iptsrc            , E_Float* f_horseq           , E_Float* a1_pr          ,
             E_Float* a1_fd              , E_Float* a1_hrr             , E_Float* aneq_o3            , E_Float* psi_corr       ,  E_Int& flag_NSLBM)
 {
@@ -399,11 +398,12 @@ for (E_Int nd = 0; nd < nidom; nd++) { autorisation_bc[nd]=1;}
 if(flag_NSLBM==1)
   {
     E_Int nitcfg_loc= 1;
+    E_Int* param_int_tc = int_tc[0];
+    E_Float* param_real_tc = real_tc[0];
     for (E_Int ip2p = 1; ip2p < param_int_tc[1]+1; ++ip2p)
        {
-         E_Int sizecomIBC = param_int_tc[2];
-         E_Int sizecomID  = param_int_tc[3+sizecomIBC];
-         E_Int shift_graph = sizecomIBC + sizecomID + 3;
+         E_Int sizecomID = param_int_tc[2];
+         E_Int shift_graph = sizecomID + 2;
 
          E_Int ech  = param_int_tc[ip2p+shift_graph];
          E_Int dest = param_int_tc[ech];

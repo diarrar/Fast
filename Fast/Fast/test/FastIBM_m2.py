@@ -1,12 +1,13 @@
 # - Fast.IBM -
 # Euler, para, frontType=1
 import Fast.IBM as App
+import FastC.PyTree as FastC
+import FastS.Mpi as FastS
 import Converter.PyTree as C
 import Converter.Mpi as Cmpi
 import KCore.test as test
 import Converter.Internal as Internal
 import Geom.PyTree as D
-import FastC.PyTree as FastC
 
 import Post.IBM as P_IBM
 
@@ -55,14 +56,57 @@ t,tc = myApp.prepare(FILEB, t_out=LOCAL+'/t.cgns', tc_out=LOCAL+'/tc.cgns')
 Internal._rmNodesFromType(tc, 'Rind_t')
 Internal._rmNodesFromName(tc, Internal.__GridCoordinates__)
 if Cmpi.rank == 0: test.testT(tc, 1)
-
-# Compute
-t,tc = myApp.compute(LOCAL+'/t.cgns', LOCAL+'/tc.cgns', t_out=LOCAL+'/restart.cgns', tc_out=FILEC, nit=100)
 Cmpi.barrier()
+
+tc, graph = FastC.loadTree(LOCAL+'/tc.cgns', graph=True)
+
+FastC._attributeNoPassTransfer(tc, graph=graph, cutoff=1.e-7, verbose=0)
+
+Cmpi.convertPyTree2File(tc,LOCAL+'/tc.cgns')
+tc, graph = FastC.loadTree(LOCAL+'/tc.cgns', graph=True)
+t         = FastC.loadTree(LOCAL+'/t.cgns')
+
+# case
+# Compute
+moduloVerif = 200
+numb={"temporal_scheme": "implicit", "ss_iteration":1, "omp_mode":0, "modulo_verif":moduloVerif }
+numz={"time_step": 0.0007, "scheme":"roe_min", "time_step_nature":"local", "cfl":4.}
+
+FastC._setNum2Base(t, numb); FastC._setNum2Zones(t, numz)
+
+t, tc, metrics = FastS.warmup(t, tc, graph=graph, verbose=0)
+
+it0 = 0; time0 = 0.; NIT = 100
+first = Internal.getNodeFromName1(t, 'Iteration')
+if first is not None: it0 = Internal.getValue(first)
+first = Internal.getNodeFromName1(t, 'Time')
+if first is not None: time0 = Internal.getValue(first)
+time_step = Internal.getNodeFromName(t, 'time_step')
+time_step = Internal.getValue(time_step)
+
+
+for it in range(NIT):
+        FastS._compute(t, metrics, it, tc, graph)
+        if it%moduloVerif == 0:
+            if Cmpi.rank == 0: print('- %d / %d - %f'%(it+it0, NIT+it0, time0))
+            FastS.display_temporal_criteria(t, metrics, it)
+        time0 += time_step
+
+
+
+# time stamp
+Internal.createUniqueChild(t, 'Iteration', 'DataArray_t', value=it0+NIT)
+Internal.createUniqueChild(t, 'Time', 'DataArray_t', value=time0)
+
+
+FastC.save(t,LOCAL+'/restart.cgns')
+if Cmpi.size > 1: Cmpi.barrier()
 
 if Cmpi.rank == 0:
     t = C.convertFile2PyTree(LOCAL+'/restart.cgns')
     Internal._rmNodesFromType(t, 'Rind_t')
+    Internal._rmNodesFromName(t, '*M1')
+    Internal._rmNodesFromName(t, '*P1')
     Internal._rmNodesByName(t, '.Solver#Param')
     Internal._rmNodesByName(t, '.Solver#ownData')
     Internal._rmNodesByName(t, '.Solver#dtloc')

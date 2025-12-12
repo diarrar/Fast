@@ -87,7 +87,6 @@
               E_Int inckD = jmax*ratio_j;
               if(ratio_k==1){inckD=0; coefk = 0;}
 
-              E_Int inck = jmax*2;
               #pragma omp for collapse(2) nowait
               for (E_Int k = 0; k < kmax; k++)
                {
@@ -130,7 +129,6 @@
 
               E_Int imax= (fen[1]-fen[0]+1)/ratio_i;
               E_Int kmax= (fen[5]-fen[4]+1)/ratio_k;
-              //E_Int inck = imax*2;
               E_Int imaxD = imax*ratio_i;
               E_Int inciD = 1;
               E_Float coefi = 1;

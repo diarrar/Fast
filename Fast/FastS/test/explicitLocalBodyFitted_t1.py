@@ -3,8 +3,6 @@
 import Connector.PyTree as X
 import Converter.Internal as Internal
 import Converter.PyTree as C
-import Fast.PyTree  as Fast
-import Fast.Utils as Utils
 import FastC.PyTree as FastC
 import FastS.PyTree as FastS
 import KCore.test as test
@@ -25,8 +23,8 @@ if not os.path.isfile(tFileName):
     tar.extractall(path=LOCAL)
     tar.close()
 
-t  = Fast.loadTree(tFileName)
-tc = Fast.loadTree(tcFileName)
+t  = FastC.loadTree(tFileName)
+tc = FastC.loadTree(tcFileName)
 
 NIT                        = 100     # number of iterations
 display_probe_freq         = 10      # iteration frequency to display modulo_verif

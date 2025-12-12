@@ -20,7 +20,6 @@
 # include "FastS/fastS.h"
 # include "FastC/fastc.h"
 # include "FastS/param_solver.h"
-# include "connector.h"
 # include <string.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -80,14 +79,15 @@ E_Int K_FASTS::gsdr3(
   E_Float**& iptrdm          ,
   E_Float*   iptroflt        , E_Float*   iptroflt2       , E_Float*  iptwig       , E_Float*   iptstat_wig  ,
   E_Float*   iptdrodm        , E_Float*   iptcoe          , E_Float*  iptrot       , E_Float**& iptdelta     , E_Float**& iptro_res, E_Float**& iptdrodm_transfer,
-  E_Int*&    param_int_tc    , E_Float*& param_real_tc    , E_Int*& linelets_int   , E_Float*& linelets_real , 
-  E_Int&     taille_tabs     , E_Float*& stock            , E_Float*& drodmstock   , E_Float*& constk        , E_Float** iptsrc)
+  E_Int**    int_tc          , E_Float**  real_tc         , E_Int*& linelets_int   , E_Float*& linelets_real , 
+  E_Int&     taille_tabs     , E_Float*&  stock           , E_Float*& drodmstock   , E_Float*& constk        , E_Float** iptsrc)
 
  {
 #ifdef TimeShow  
   E_Int rank =0; 
-  E_Float* ipt_timecount = new E_Float[5];
-  ipt_timecount[0:4] = 0.0;
+  E_Float timecount[7];
+  E_Float* ipt_timecount = timecount;
+  ipt_timecount[0:7] = 0.0;
   E_Int nbpointsTot  =0;
 
   for (E_Int nd = 0; nd < nidom; nd++) { nbpointsTot = nbpointsTot + param_int[nd][ IJKV ]*param_int[nd][ IJKV +1 ]*param_int[nd][ IJKV +2 ]; }
@@ -351,7 +351,6 @@ if(nitcfg==1){param_real[0][TEMPS] = 0.0;}
 #else  
      E_Float     trans_deb = 0.;
 #endif
-
   //
   //
   //FillGhostcell si mise a jour necessaire et transfer dans C layer 
@@ -364,12 +363,8 @@ E_Int nitcfg_stk = nitcfg;
 if(lexit_lu ==0 && layer_mode>=1)
 {   
   //remplissage ghost transfert
-  for (E_Int ipass = 0; ipass < iptdtloc[12]; ipass++)
-  {
   #include "FastS/Compute/transfert_multiblock.cpp"
-  }
-  E_Int cycl;
- 
+
   for (E_Int nd = 0; nd < nidom; nd++)
     {
      // flag pour transfert optimiser explicit local
@@ -393,6 +388,7 @@ if(lexit_lu ==0 && layer_mode>=1)
 #else  
     time_trans = 0.;
 #endif
+   //printf(" Transfert Data %f %d \n", time_trans, nitcfg);
 
 //calcul sequentiel flux IBM et data CLs (lund, wallmodel) a toutes les ssiter
 for (E_Int nd = 0; nd < nidom; nd++)
@@ -467,6 +463,7 @@ E_Int lrhs=0; E_Int lcorner=0;
 #else 
      time_trans = 0.;
 #endif
+   //printf(" Transfert BC + channel %f %f  %d \n",omp_get_wtime()-trans_deb , time_trans, nitcfg);
 
   nitcfg = nitcfg_stk;
 
@@ -483,7 +480,6 @@ E_Int lrhs=0; E_Int lcorner=0;
 //
 //    }
 
-   delete [] ipt_timecount;
    return ibord_ale;
 
 }

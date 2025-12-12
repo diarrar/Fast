@@ -1,5 +1,6 @@
 # - FastIBMO -
 import Fast.IBMO as App
+import FastC.PyTree as FastC
 import Converter.Mpi as Cmpi
 import Transform.PyTree as T
 import Converter.Internal as Internal
@@ -21,6 +22,15 @@ myApp.set(numz={"time_step": 0.002,
 t,tc = myApp.prepare(FILE, t_out=LOCAL+'/t.cgns', tc_out=LOCAL+'/tc.cgns', expand=3, vmin=11, check=False, NP=Cmpi.size, distrib=True)
 if Cmpi.rank == 0: test.testT(t,1)
 Cmpi.barrier()
+
+
+#on reload pour avoir arbre decompresse
+tc, graph = FastC.loadTree(LOCAL+'/tc.cgns', graph=True)
+#on attribue pass
+FastC._attributeNoPassTransfer(tc, graph=graph, cutoff=1.e-12, verbose=0)
+#on sauvegarde pour calculer graph a  apartir loadTree
+Cmpi.convertPyTree2File(tc,LOCAL+'/tc.cgns')
+
 
 t,tc = myApp.compute(LOCAL+'/t.cgns',LOCAL+'/tc.cgns', t_out=LOCAL+'/restart.cgns', tc_out=LOCAL+'/tc_restart.cgns', nit=100)
 
