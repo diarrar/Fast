@@ -83,10 +83,8 @@ PyObject* K_FASTS::recup3para_(PyObject* self, PyObject* args)
   FldArrayI* param_int;
   K_NUMPY::getFromNumpyArray(pyParam_int, param_int); E_Int* ipt_param_int = param_int->begin();
   
-  E_Int nbcomIBC = ipt_param_int[1];
-  E_Int nbcomID  = ipt_param_int[2+nbcomIBC];
-  
-  E_Int shift_graph = nbcomIBC + nbcomID + 2;
+  E_Int sizecomID  = ipt_param_int[2];
+  E_Int shift_graph = sizecomID + 2;
 
   E_Int ech            = ipt_param_int[ NoTransfert +shift_graph];
 

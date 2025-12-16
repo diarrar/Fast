@@ -1,4 +1,4 @@
-if( kimpli == 1  && param_int[0][LU_MATCH]==1 && param_int_tc != NULL)
+if( kimpli == 1  && param_int[0][LU_MATCH]==1 && int_tc[0] != NULL)
   { 
    #pragma omp master
     { //Raccord V0
@@ -6,10 +6,11 @@ if( kimpli == 1  && param_int[0][LU_MATCH]==1 && param_int_tc != NULL)
       E_Int rk           = param_int[0][RK];
       E_Int exploc       = param_int[0][EXPLOC];
       E_Int numpassage   = 1;
-
-      K_FASTC::setInterpTransfersFast(iptdrodm_transfer, vartype, param_int_tc,
-                         param_real_tc, param_int, param_real, ipt_omp, linelets_int, linelets_real,
-      			 it_target, nidom, ipt_timecount, mpi, nitcfg , nssiter, rk, exploc, numpassage);
+      for (E_Int nopass = 0; nopass < iptdtloc[12]; nopass++)
+        {
+         K_FASTC::setInterpTransfersFast(iptdrodm_transfer, vartype, int_tc[nopass], real_tc[nopass] , param_int, param_real, ipt_omp,
+                                     linelets_int, linelets_real, it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage, nopass );
+        }
     }
     #pragma omp barrier
   }

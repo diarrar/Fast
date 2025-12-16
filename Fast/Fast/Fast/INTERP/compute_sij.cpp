@@ -1,3 +1,4 @@
+# include "FastC/fastc.h"
 # include "Fast/fast.h"
 # include "Fast/param_solver.h"
 # include <string.h>
@@ -24,18 +25,12 @@ void K_FAST::compute_sij(
   E_Float time_in = omp_get_wtime();
 #endif
 
-
-  E_Int pass_deb, pass_fin;
-  if     (TypeTransfert==0) { pass_deb =1; pass_fin =2; }//ID
-  else if(TypeTransfert==1) { pass_deb =0; pass_fin =1; }//IBCD
-  else                      { pass_deb =0; pass_fin =2; }//ALL
-
   // nvars pour dimensionner vectOfDnrFields
   E_Int nvars=11;
 
-  E_Int sizecomIBC = param_int_tc[2];
-  E_Int sizecomID  = param_int_tc[3+sizecomIBC];
-  E_Int shift_graph = sizecomIBC + sizecomID + 3;
+  E_Int Nbp2p_send = param_int_tc[1];
+  E_Int sizecomID  = param_int_tc[2];
+  E_Int shift_graph = sizecomID + 2;
 
   E_Int threadmax_sdm = __NUMTHREADS__;
   E_Int ech           = param_int_tc[NoTransfert + shift_graph];
@@ -94,9 +89,6 @@ void K_FAST::compute_sij(
       if (ibcType > ibcTypeMax){ ibcTypeMax= ibcType;}
       E_Int ibc = 1;
       if (ibcType < 0) ibc = 0;
-      if      (TypeTransfert == 0 && ibc == 1) { continue; } 
-      else if (TypeTransfert == 1 && ibc == 0) { continue; }
-
 
       // Si on est en explicit local, on va autoriser les transferts entre certaines zones en fonction de la ss-ite courante
       if(exploc == 1)
@@ -171,14 +163,6 @@ void K_FAST::compute_sij(
 
     vector<E_Float*> vectOfDnrFields(nvars);
 
-    // 1ere pass_typ: IBC
-    // 2eme pass_typ: transfert
-    //
-
-    E_Int count_racIBC = 0;
-
-     for  (E_Int ipass_typ=pass_deb; ipass_typ< pass_fin; ipass_typ++)
-     {
       // 1ere pass_inst: les raccord fixe
       // 2eme pass_inst: les raccord instationnaire
       for (E_Int pass_inst=pass_inst_deb; pass_inst< pass_inst_fin; pass_inst++)
@@ -309,7 +293,6 @@ void K_FAST::compute_sij(
 #                        include "Fast/INTERP/cp_sij.h"
                       }
 
-
                       ideb       = ideb + ifin;
                       shiftCoef  = shiftCoef +  ntype[1+ndtyp]*sizecoefs; //shift coef   entre 2 types successif
                       shiftDonor= shiftDonor +  ntype[1+ndtyp];           //shift donor entre 2 types successif
@@ -318,7 +301,6 @@ void K_FAST::compute_sij(
 	          } //autorisation transfert
                 }//irac
                }//pass_inst
-    }  // ipass
   }    // omp
 
 }

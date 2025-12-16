@@ -122,7 +122,7 @@ if (ithread==1) printf("cpu invlu + dpdw       %g \n", lhs_end-lhs_beg);
 #ifdef _OPENMP
 lhs_beg = omp_get_wtime();
 #endif
-if( param_int_tc != NULL)
+if( int_tc[0] != NULL)
   { 
 #pragma omp master
     { //Raccord V0  
@@ -130,14 +130,12 @@ if( param_int_tc != NULL)
     E_Int rk           = param_int[0][RK];
     E_Int exploc       = param_int[0][EXPLOC];
     E_Int numpassage   = 1;
-
-      //setInterpTransfersFastS(iptkrylov_transfer, vartype, param_int_tc,
-//			      param_real_tc, param_int, param_real, linelets_int, linelets_real,
- //        		      it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage);
-      K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, param_int_tc,
-			      param_real_tc, param_int, param_real, ipt_omp, linelets_int, linelets_real,
-         		      it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage);
-    }
+    for (E_Int nopass = 0; nopass < iptdtloc[12]; nopass++)
+      {
+        K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, int_tc[nopass], real_tc[nopass] , param_int, param_real, ipt_omp,
+                                     linelets_int, linelets_real, it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage, nopass );
+      }
+    } // fin master 
   }
 #ifdef _OPENMP
 lhs_beg = omp_get_wtime();

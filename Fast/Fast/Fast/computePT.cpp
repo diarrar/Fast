@@ -85,63 +85,56 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
   //
   // partie code specifique au Transfer Data
   //
-  //
-  //
-  PyObject* pyParam_int_tc;PyObject* pyParam_real_tc; PyObject* iskipArray=NULL;
-  PyObject* pyLinlets_int; PyObject* pyLinlets_real;
-  FldArrayI* param_int_tc;  FldArrayI* iskip_lu;  FldArrayI* linelets_int;
-  FldArrayF* param_real_tc; FldArrayF* linelets_real;
-  E_Int* ipt_iskip_lu;  E_Int*  ipt_param_int_tc ;
+  PyObject* pyParam_int_tc1; PyObject* pyParam_int_tc2; PyObject* pyParam_int_tc3; PyObject* pyParam_int_tc4;
+  PyObject* pyParam_real_tc1; PyObject* pyParam_real_tc2; PyObject* pyParam_real_tc3; PyObject* pyParam_real_tc4;
+  PyObject* iskipArray=NULL;
+  PyObject* pyLinlets_int; PyObject* pyLinlets_real; 
+  FldArrayI* iskip_lu; FldArrayI* linelets_int;
+  FldArrayI* param_int_tc1; FldArrayI* param_int_tc2; FldArrayI* param_int_tc3; FldArrayI* param_int_tc4; 
+  FldArrayF* param_real_tc1; FldArrayF* param_real_tc2; FldArrayF* param_real_tc3; FldArrayF* param_real_tc4;
+  FldArrayF* linelets_real;
+  E_Int* ipt_iskip_lu; E_Int* ipt_param_int_tc; 
   E_Float* ipt_param_real_tc; E_Float* ipt_linelets_real; E_Int* ipt_linelets_int;
 
   E_Int lssiter_loc; E_Int lexit_lu;  E_Int lssiter_verif;
   E_Int it_target = iptdtloc[4];
 
+  E_Int npass_transfer = iptdtloc[12];
+  E_Int* int_tc[npass_transfer];
+  E_Float* real_tc[npass_transfer];
 
   lssiter_verif = 0; // par defaut, pas de calcul cfl , ni residu Newton
   if(nitrun % iptdtloc[1] == 0 || nitrun == 1) lcfl =1;
 
-      pyParam_int_tc = PyDict_GetItemString(work,"param_int_tc");
-      pyParam_real_tc= PyDict_GetItemString(work,"param_real_tc");
+ if (layer_mode >= 1)
+ {
+    # include "FastC/Compute/get_param_tc.h"
 
-      if (pyParam_int_tc != Py_None)
-	{ K_NUMPY::getFromNumpyArray(pyParam_int_tc , param_int_tc ); ipt_param_int_tc = param_int_tc -> begin(); }
-      else{ ipt_param_int_tc = NULL;}
+    pyLinlets_int = PyDict_GetItemString(work,"linelets_int");
+    if (pyLinlets_int != Py_None)
+    {K_NUMPY::getFromNumpyArray(pyLinlets_int, linelets_int); ipt_linelets_int = linelets_int->begin();}
+    else{ipt_linelets_int = NULL;}  
+  
+    pyLinlets_real = PyDict_GetItemString(work,"linelets_real");
+    if (pyLinlets_real != Py_None)
+    {K_NUMPY::getFromNumpyArray(pyLinlets_real, linelets_real); ipt_linelets_real = linelets_real->begin();}
+    else{ipt_linelets_real = NULL;}
+  
+    PyObject* tmp1 = PyDict_GetItemString(work,"lssiter_loc"); 
+    if (PyLong_Check(tmp1) == true) lssiter_loc = PyLong_AsLong(tmp1);
+    else lssiter_loc = PyInt_AsLong(tmp1);
 
-      if (pyParam_real_tc != Py_None)
-	{ K_NUMPY::getFromNumpyArray(pyParam_real_tc, param_real_tc); ipt_param_real_tc= param_real_tc-> begin(); }
-      else{ ipt_param_real_tc = NULL; }
-
-  if( layer_mode ==1)
-    {
-
-      pyLinlets_int = PyDict_GetItemString(work,"linelets_int");
-      if (pyLinlets_int != Py_None)
-	{K_NUMPY::getFromNumpyArray(pyLinlets_int, linelets_int); ipt_linelets_int = linelets_int->begin();}
-      else{ipt_linelets_int = NULL;}
-
-      pyLinlets_real = PyDict_GetItemString(work,"linelets_real");
-      if (pyLinlets_real != Py_None)
-	{K_NUMPY::getFromNumpyArray(pyLinlets_real, linelets_real); ipt_linelets_real = linelets_real->begin();}
-      else{ipt_linelets_real = NULL;}
-
-
-      iskipArray = PyDict_GetItemString(work,"skip_lu");
-      K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu); ipt_iskip_lu = iskip_lu->begin();
-
-      PyObject* tmp1 = PyDict_GetItemString(work,"lssiter_loc");
-      if (PyLong_Check(tmp1) == true) lssiter_loc = PyLong_AsLong(tmp1);
-      else lssiter_loc = PyInt_AsLong(tmp1);
-
+    iskipArray = PyDict_GetItemString(work,"skip_lu");
+    K_NUMPY::getFromNumpyArray(iskipArray, iskip_lu); ipt_iskip_lu = iskip_lu->begin();
     }
   else
     {
       PyObject* tmp = PyDict_GetItemString(work,"lexit_lu");      lexit_lu      = PyLong_AsLong(tmp);
                 tmp = PyDict_GetItemString(work,"lssiter_verif"); lssiter_verif = PyLong_AsLong(tmp);
       ipt_linelets_int  = NULL;
-      ipt_linelets_real = NULL;
-      //ipt_param_int_tc  = NULL;
-      //ipt_param_real_tc = NULL;
+      ipt_linelets_real = NULL; 
+      int_tc[0]  = NULL;
+      real_tc[0] = NULL;
     }
   // Fin partie code specifique au Transfer Data
 
@@ -694,9 +687,9 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 		    iptvol_df          , iptventi          , iptventj           , iptventk          ,
 		    iptrdm             , iptroflt          , iptroflt2          , iptgrad           ,
 		    iptwig             , iptstat_wig       , iptflu             , iptdrodm          ,
-		    iptcoe             , iptrot            , iptdelta           , iptro_res         ,
-		    iptdrodm_transfer  , ipt_param_int_tc  , ipt_param_real_tc  , ipt_linelets_int  ,
-		    ipt_linelets_real  , taille_tabs       , iptstk             , iptdrodmstk       ,
+		    iptcoe             , iptrot            , iptdelta           , iptro_res         , iptdrodm_transfer,
+                    int_tc             , real_tc           , ipt_linelets_int   , ipt_linelets_real ,
+		    taille_tabs        , iptstk            , iptdrodmstk        ,
 		    iptcstk            , iptsrc            ,
                     f_horseq           , a1_pr             , a1_fd              , a1_hrr      ,
                     aneq_o3            , psi_corr          , flag_NSLBM);
@@ -800,11 +793,9 @@ PyObject* K_FAST::_computePT(PyObject* self, PyObject* args)
 
   if(flag_dtloc==1) { RELEASESHAREDN( dtloc_stk     , stk);}
 
-      if(pyParam_int_tc  != Py_None ) { RELEASESHAREDN( pyParam_int_tc, param_int_tc);  }
-      if(pyParam_real_tc != Py_None ) { RELEASESHAREDN( pyParam_real_tc, param_real_tc);}
-
   if(layer_mode==1)
     {
+      # include "FastC/Compute/release_param_tc.h"
       if (pyLinlets_int  != Py_None) { RELEASESHAREDN( pyLinlets_int , linelets_int ); }
       if (pyLinlets_real != Py_None) { RELEASESHAREDN( pyLinlets_real, linelets_real); }
 

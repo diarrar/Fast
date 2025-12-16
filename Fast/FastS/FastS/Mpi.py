@@ -20,6 +20,8 @@ try:
     import Connector.PyTree as X
     import Connector
     import FastC.PyTree as FastC
+    import FastC.compactTransfers as PACK
+    import FastC.Mpi as FCmpi
     import RigidMotion.PyTree as R
     import os
     import math
@@ -30,21 +32,9 @@ try: range = xrange
 except: pass
 
 #==============================================================================
-def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, layer="c", NIT=1, ucData=None, vtune=False, graphInvIBCD_WM=None):
+def _compute(t, metrics, nitrun, tc=None, graph=None, layer="c", NIT=1, ucData=None, vtune=False):
     gradP      =False
     TBLE       =False
-    isWireModel=False
-    if tc is not None:
-        base       = Internal.getBases(tc)[0]
-        solverIBC  = Internal.getNodeFromName(base ,'.Solver#IBCdefine')
-        if solverIBC is not None:
-            gradP      = eval(Internal.getValue(Internal.getNodeFromName(solverIBC, 'isgradP')))
-            TBLE       = eval(Internal.getValue(Internal.getNodeFromName(solverIBC, 'isTBLE')))
-            isWireModel= eval(Internal.getValue(Internal.getNodeFromName(solverIBC, 'isWireModel')))
-
-    if isWireModel and tc2 is not None:
-        print("Wire model does not currently support tc2 options...exiting...")
-        exit()
 
     if isinstance(graph, list):
         #test pour savoir si graph est une liste de dictionnaires (explicite local)
@@ -55,36 +45,22 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
 
     if graph is not None and not grapheliste:
         procDict  = graph['procDict']
-        graphID   = graph['graphID']
-        graphIBCD = graph['graphIBCD']
-        if tc2 is not None:
-            graphIBCD2 = graph2['graphIBCD']
-            graphInvIBCD = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
-        if isWireModel and graphInvIBCD_WM is None:
-            graphInvIBCD_WM = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
     else:
         procDict=None; graphID=None; graphIBCD=None
 
-    own  = Internal.getNodeFromName1(t, '.Solver#ownData')
-    dtloc= Internal.getNodeFromName1(own , '.Solver#dtloc')
+    own    = Internal.getNodeFromName1(t, '.Solver#ownData')
+    dtloc  = Internal.getNodeFromName1(own , '.Solver#dtloc')
+    dtloc  = Internal.getValue(dtloc) # tab numpy
+    nitmax = int(dtloc[0])
 
     zones= Internal.getZones(t)
-
-    node = Internal.getNodeFromName1(t, '.Solver#define')
-    omp_node = Internal.getNodeFromName1(node, 'omp_mode')
-    ompmode  = FastC.OMP_MODE
-    if  omp_node is not None: ompmode = Internal.getValue(omp_node)
-
-    dtloc   = Internal.getValue(dtloc) # tab numpy
-    nitmax  = int(dtloc[0])
-
     #### a blinder...
     param_int_firstZone = Internal.getNodeFromName2( zones[0], 'Parameter_int' )[1]
     itypcp = param_int_firstZone[29]
     rk     = param_int_firstZone[52]
     exploc = param_int_firstZone[54]
     #### a blinder...
-    if nitrun == 1: print('Info: using layer trans=%s (ompmode=%d)'%(layer, ompmode))
+    if nitrun == 1: print('Info: using layer trans=%s (ompmode=%d)'%(layer, FastC.OMP_MODE))
 
     #determine layer pour transfert et sous-iteration
     if          "Python" == layer: layer_mode= 0
@@ -100,16 +76,8 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
     if layer_mode==0 or layer_mode==2:
 
         if exploc==1 and tc is not None and layer_mode==0:
-            tc_compact = Internal.getNodeFromName1(tc, 'Parameter_real')
-            if tc_compact is not None:
-                param_real_tc= tc_compact[1]
-                param_int_tc = Internal.getNodeFromName1(tc, 'Parameter_int' )[1]
-
-                nbcomIBC    = param_int_tc[1]
-                shift_graph = nbcomIBC + param_int_tc[2+nbcomIBC] + 2
-                comm_P2P    = param_int_tc[0]
-                pt_ech      = param_int_tc[comm_P2P + shift_graph]
-                dest        = param_int_tc[pt_ech]
+            param_int_tc = FastC.HOOK['param_int_tc']
+            zonesD       = Internal.getZones(tc)
 
         hookTransfer = []
         hook1        = FastC.HOOK.copy()
@@ -137,7 +105,6 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
                 # dtloc GJeanmasson
                 if exploc==1 and tc is not None and layer_mode==0:
 
-                    zonesD    = Internal.getZones(tc)
 
                     fasts.dtlocal2para_mpi(zones, zonesD, param_int_tc, hook1, nstep)
 
@@ -147,20 +114,19 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
 
                     if graph is not None and grapheliste == True:
                         procDict  = graph[nstep-1]['procDict']
-                        graphID   = graph[nstep-1]['graphID']
-                        graphIBCD = graph[nstep-1]['graphIBCD']
+                        graphID   = graph[nstep-1]['graphPass1']
+                        #graphIBCD = graph[nstep-1]['graphAll2']
 
                     # Ghostcell
-                    _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, ompmode, hook1, graphID, graphIBCD, procDict, nitmax, rk, exploc, isWireModel=isWireModel)
+                    _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, hook1, graph[nstep-1], nitmax, rk, exploc)
 
                     fasts.recup3para_mpi(zones, zonesD, param_int_tc, hook1, nstep)
 
                     if nstep%2 == 0:
-                        if graph is not None and grapheliste == True:
-                            procDict  = graph[nitmax+nstep-1]['procDict']
-                            graphID   = graph[nitmax+nstep-1]['graphID']
-                            graphIBCD = graph[nitmax+nstep-1]['graphIBCD']
-                        _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, nitmax, hook1, graphID, graphIBCD, procDict, nitmax, rk, exploc, num_passage=2, isWireModel=isWireModel)
+                        #if graph is not None and grapheliste == True:
+                        #    #graphID   = graph[nitmax+nstep-1]['graphPass1']
+                        #    #graphIBCD = graph[nitmax+nstep-1]['graphAll2']
+                        _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, hook1, graph[nitmax+nstep-1], nitmax, rk, exploc, num_passage=2)
 
                     _applyBC(zones,metrics, hook1, nstep, var=vars[0])
 
@@ -169,11 +135,7 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
 
                     tic=Time.time()
 
-                    if tc2 is None:
-                        if layer_mode==0:
-                            _fillGhostcells(zones, tc, metrics, timelevel_target , vars, nstep, ompmode, hook1, graphID, graphIBCD, procDict, gradP=gradP, TBLE=TBLE, isWireModel=isWireModel, graphInvIBCD_WM=graphInvIBCD_WM)
-                    else:
-                        _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, ompmode, hook1, graphID, graphIBCD, procDict, gradP=gradP, TBLE=TBLE, graphInvIBCD=graphInvIBCD, graphIBCD2=graphIBCD2)
+                    if layer_mode==0: _fillGhostcells(zones, tc, metrics, timelevel_target , vars, nstep, hook1, graph)
 
                     # add unsteady Chimera transfers (motion) here
                     if ucData is not None:
@@ -234,7 +196,7 @@ def _compute(t, metrics, nitrun, tc=None, graph=None, tc2=None, graph2=None, lay
         return tps_cp,tps_tr,tps_tr1
 
 #==============================================================================
-def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, omp_mode, hook1, graphID, graphIBCD, procDict, nitmax=1, rk=1, exploc=0, num_passage=1, gradP=False, TBLE=False, isWireModel=False, graphInvIBCD_WM=None):
+def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, hook1, graph, nitmax=1, rk=1, exploc=0, num_passage=1):
 
     #timecount = numpy.zeros(4, dtype=numpy.float64)
     timecount = []
@@ -243,12 +205,17 @@ def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, omp_mode,
 
         #transfert
         if tc is not None:
-            tc_compact = Internal.getNodeFromName1(tc, 'Parameter_real')
-            if tc_compact is not None:
-                param_real= tc_compact[1]
-                param_int = Internal.getNodeFromName1( tc, 'Parameter_int' )[1]
+            firstpass = Internal.getNodeFromName1(tc, 'Pass1')
+            if firstpass is not None:
+                param_int = Internal.getNodeFromName1(firstpass, 'Parameter_int' )[1]
+                tmp = Internal.getNodeFromName1(firstpass, 'Parameter_real')
+                if tmp is not None: param_real = tmp[1]
+                else: param_real=None
+
                 zonesD    = Internal.getZones(tc)
 
+                procDict  = graph['procDict']
+                graphID   = graph['graphPass1']
                 if hook1['neq_max'] == 5: varType = 2
                 else                    : varType = 21
 
@@ -256,63 +223,18 @@ def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, omp_mode,
 
                 for v in vars: C._cpVars(zones, 'centers:'+v, zonesD, v)
 
-                if gradP:
-                    varsGrad = ['Density', 'gradxDensity']
-                    varType = 22
-                    # varType 22 means that there is 6 variables and 6 gradVariables to transfers
-                    # to avoid interfering with the original ___setInterpTransfers, we instead use ___setInterpTransfers4GradP
-                    for v in varsGrad: C._cpVars(zones, 'centers:'+v, zonesD,  v)
-                    type_transfert = 1
-                    Xmpi.__setInterpTransfers4GradP(zones , zonesD, varsGrad, param_int, param_real, type_transfert, timelevel_target,
-                                                    nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphIBCD, procDict=procDict)
-                    varType = 21
+                type_transfert = 0  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
+                for npass in range(1,dtloc[12]+1):
+                    passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
+                    tmp       = Internal.getNodeFromName1( passNode, 'Parameter_real')
+                    if tmp is not None: param_real = tmp[1]
+                    else: param_real=None
 
-                #if Cmpi.rank == 0: print('fillGC: timeleveltarget= ', timelevel_target)
-                if isWireModel:
-                    ##The approach is the following
-                    ##1) interpolate the values at the additional points for WM
-                    ##2) copy these interpolated values into the tc
-                    ##3) perfom the ibc & id interpolation as normal, excluding the additional points for WM
+                    param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+                    graphID   = graph['graphPass'+str(npass)]
 
-
-                    ##1) Interpolate the values at the additional interpolated points for WM
-                    C._cpVars(zones, 'centers:Density_WM', zonesD, 'Density_WM')
-                    nvars_local     = hook1['neq_max']
-                    type_transfert  = 1
-
-                    Xmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                              nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphIBCD, procDict=procDict,
-                                              isWireModel_int=1)
-
-                    ##2) Transfers info at target points from flow field to the tc
-                    Xmpi.__setInterpTransfers_WireModel(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,
-                                                        nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphIBCD, procDict=procDict,
-                                                        graphIBCD=graphIBCD, graphInvIBCD_WM=graphInvIBCD_WM, nvars=nvars_local)
-
-                    C._rmVars(zonesD, 'Density_WM')
-
-                    ##3)
-                    isWireModel_int = -1  # is a local flag for Xmpi.__setInterpTransfers
-                    type_transfert  =  1  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                    Xmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                              nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphID, procDict=procDict,
-                                              isWireModel_int=isWireModel_int)
-
-                    isWireModel_int = 0
-                    type_transfert  = 0  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                    Xmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                              nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphID, procDict=procDict,
-                                              isWireModel_int=isWireModel_int)
-                else:
-                    #recuperation Nb pas instationnaire dans tc
-                    type_transfert = 1  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                    Xmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                              nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphIBCD, procDict=procDict,
-                                              isWireModel_int=int(isWireModel))
-                    type_transfert = 0  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                    Xmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                              nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphID, procDict=procDict,
-                                              isWireModel_int=int(isWireModel))
+                    FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target, nstep, nitmax, rk, exploc, num_passage,\
+                                               varType=varType, graph=graphID, procDict=procDict)
 
                 #toc = Time.time() - tic
         # if Cmpi.rank == 0:
@@ -335,7 +257,7 @@ def _fillGhostcells(zones, tc, metrics, timelevel_target, vars, nstep, omp_mode,
 #==============================================================================
 # modified _fillGhostCells for two image points (tc + tc2) for gradP
 #==============================================================================
-def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, omp_mode, hook1, graphID, graphIBCD, procDict, nitmax=1, rk=1, exploc=0, num_passage=1, gradP=False, TBLE=False, graphInvIBCD=None, graphIBCD2=None):
+def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, hook1, graphID, graphIBCD, procDict, nitmax=1, rk=1, exploc=0, num_passage=1, gradP=False, TBLE=False, graphInvIBCD=None, graphIBCD2=None):
 
     #timecount = numpy.zeros(4, dtype=numpy.float64)
     timecount = []
@@ -344,10 +266,11 @@ def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, omp
 
         #transfert
         if tc is not None:
-            tc_compact = Internal.getNodeFromName1(tc, 'Parameter_real')
-            if tc_compact is not None:
-                param_real= tc_compact[1]
-                param_int = Internal.getNodeFromName1( tc, 'Parameter_int' )[1]
+            firstpass = Internal.getNodeFromName1(tc, 'Pass1')
+            if firstpass is not None:
+                param_real= Internal.getNodeFromName1(firstpass, 'Parameter_real')[1]
+                param_int = Internal.getNodeFromName1(firstpass, 'Parameter_int' )[1]
+
                 zonesD    = Internal.getZones(tc)
                 zonesD2   = Internal.getZones(tc2)
 
@@ -379,14 +302,14 @@ def _fillGhostcells2(zones, tc, tc2, metrics, timelevel_target, vars, nstep, omp
                     varType = 21
 
                 # #recuperation Nb pas instationnaire dans tc
-                type_transfert = 1  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                Xmpi.__setInterpTransfers(zones , zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                          nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1,
-                                          graph=graphIBCD, procDict=procDict, isWireModel=False)
-                type_transfert = 0  # 0= ID uniquememnt, 1= IBC uniquememnt, 2= All
-                Xmpi.__setInterpTransfers(zones , zonesD, vars, dtloc, param_int, param_real, type_transfert, timelevel_target,#timecount,
-                                          nstep, nitmax, rk, exploc, num_passage, varType=varType, compact=1, graph=graphID, procDict=procDict,
-                                          isWireModel=False)
+                for npass in range(1,dtloc[12]):
+                    passNode  = Internal.getNodeFromName1( tc, 'Pass'+str(npass))
+                    param_real= Internal.getNodeFromName1( passNode, 'Parameter_real')[1]
+                    param_int = Internal.getNodeFromName1( passNode, 'Parameter_int' )[1]
+
+                    FCmpi.__setInterpTransfers(zones, zonesD, vars, dtloc, param_int, param_real, timelevel_target,
+                                               nstep, nitmax, rk, exploc, num_passage, graph=graphAll1, procDict=procDict, isWireModel_int=int(isWireModel))
+
 
                 #toc = Time.time() - tic
         # if Cmpi.rank == 0:
@@ -698,50 +621,22 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     Lref= 1.
     gradP      =False
     isWireModel=False
+    nbpts_linelets = 0
     if tc is not None:
         base       = Internal.getBases(tc)[0]
         solverIBC  = Internal.getNodeFromName(base ,'.Solver#IBCdefine')
         if solverIBC is not None:
             gradP      = eval(Internal.getValue(Internal.getNodeFromName(solverIBC, 'isgradP')))
-            isWireModel= eval(Internal.getValue(Internal.getNodeFromName(solverIBC, 'isWireModel')))
-
             Re  = Internal.getValue(Internal.getNodeFromName(solverIBC, 'Reref'))
             Lref= Internal.getValue(Internal.getNodeFromName(solverIBC, 'Lref'))
 
-    graphInvIBCD_WM = None
-    if isinstance(graph, list):
-        #test pour savoir si graph est une liste de dictionnaires (explicite local)
-        #ou juste un dictionnaire (explicite global, implicite)
-        grapheliste=True
-    else:
-        grapheliste=False
-
-    if graph is not None and not grapheliste:
-        procDict  = graph['procDict']
-        graphID   = graph['graphID']
-        graphIBCD = graph['graphIBCD']
-        if isWireModel: graphInvIBCD_WM  = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
-    elif graph is not None and grapheliste:
-        procDict  = graph[0]['procDict']
-        graphID   = graph[0]['graphID']
-        graphIBCD = graph[0]['graphIBCD']
-        if isWireModel: graphInvIBCD_WM = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
-    else:
-        procDict=None; graphID=None; graphIBCD=None; graphInvIBCD_WM=None
-
-    if isWireModel and graphInvIBCD_WM is None:
-        print("Wire Model REQUIRES graphInvIBCD...exiting")
-        exit()
-
-    # compute info linelets
-    nbpts_linelets = 0
-    if tc is not None:
-        if Re > 0: #Adaptive method
-            h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
-        elif Re == 0:
-            h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
-        else: #Alferez' og method
-            h0, nbpts_linelets = 1.e-6, 45
+            # compute info linelets
+            if Re > 0: #Adaptive method
+                h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
+            elif Re == 0:
+                h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
+            else: #Alferez' og method
+                h0, nbpts_linelets = 1.e-6, 45
 
     first = Internal.getNodeFromName1(t, 'NbptsLinelets')
     if first is None: Internal.createUniqueChild(t, 'NbptsLinelets', 'DataArray_t', value=nbpts_linelets)
@@ -752,6 +647,8 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     if node is not None:
         node = Internal.getNodeFromName1(node, 'omp_mode')
         if  node is not None: ompmode = Internal.getValue(node)
+    FastC.OMP_MODE= ompmode
+
 
     # Reordone les zones pour garantir meme ordre entre t et tc
     FastC._reorder(t, tc)
@@ -769,25 +666,6 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     dtloc   = Internal.getValue(dtlocPy)# tab numpy
     nssiter = dtloc[0]
 
-    if isinstance(graph, list):
-        #test pour savoir si graph est une liste de dictionnaires (explicite local)
-        #ou juste un dictionnaire (explicite global, implicite)
-        grapheliste=True
-    else:
-        grapheliste=False
-
-    if graph is not None and not grapheliste:
-        procDict  = graph['procDict']
-        graphID   = graph['graphID']
-        graphIBCD = graph['graphIBCD']
-        if isWireModel: graphInvIBCD_WM = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
-    elif graph is not None and grapheliste:  ### Dans warmup tous les transferts doivent etre faits
-        procDict  = graph[nssiter-2]['procDict']   ### On va chercher le graphe a nssiter-2 car a cette ssite tous les transferts
-        graphID   = graph[nssiter-2]['graphID']    ### sont faits pour le schema a pas de temps local
-        graphIBCD = graph[nssiter-2]['graphIBCD']
-        if isWireModel: graphInvIBCD_WM  = Cmpi.computeGraph(tc, type='INV_IBCD', procDict=procDict)
-    else:
-        procDict=None; graphID=None; graphIBCD=None; graphInvIBCD_WM = None
     zones = Internal.getZones(t)
     f_it = FastC.FIRST_IT
     if FastC.HOOK is None: FastC.HOOK = FastC.createWorkArrays__(zones, dtloc, f_it ); FastC.FIRST_IT = f_it
@@ -878,33 +756,50 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     # Compactage arbre transfert
     #
     if tc is not None:
-        nbpts_linelets = 0
-        if Re > 0: #Adaptive method
-            # h0, hn, nbpts_linelets = computeLineletsInfo(tc, Re=Re, Lref=Lref, q=1.1)
-            # print(h0, hn, nbpts_linelets)
-            _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-        elif Re == 0:
-            # h0, hn, nbpts_linelets = computeLineletsInfo2(tc, q=1.1)
-            # print(h0, hn, nbpts_linelets)
-            _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
-        else: #Alferez' og method
-            # h0, nbpts_linelets = 1.e-6, 45
-            # print(h0, -1, nbpts_linelets)
-            _createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
+        #nbpts_linelets = 0
+        if solverIBC is not None:
+            if Re > 0: #Adaptive method
+                _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            elif Re == 0:
+                _createTBLESA2(t, tc, h0=h0, hn=hn, nbpts_linelets=nbpts_linelets)
+            else: #Alferez' og method
+                _createTBLESA2(t, tc, h0=h0, hn=-1, nbpts_linelets=nbpts_linelets)
 
-        X.miseAPlatDonorTree__(t, tc, graph=graph,list_graph=list_graph, nbpts_linelets=nbpts_linelets)
+        Nbpass = 1
+        for z in Internal.getZones(tc):
+            subRegions = Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+            for s in subRegions:
+                if   s[0][-6:]== '_pass2' and Nbpass==1: Nbpass=2
+                elif s[0][-6:]== '_pass3' and Nbpass<=2: Nbpass=3
+                elif s[0][-6:]== '_pass4' and Nbpass<=3: Nbpass=4
 
-        npass_transfer = dtloc[12]
-        npass_transfer = Cmpi.allreduce(npass_transfer)
-        if npass_transfer > Cmpi.size: dtloc[12]=2
+        Nbpass = Cmpi.allreduce(Nbpass, op=Cmpi.MAX)
 
-        FastC.HOOK['param_int_tc'] = Internal.getNodeFromName1( tc, 'Parameter_int')[1]
-        param_real_tc               = Internal.getNodeFromName1( tc, 'Parameter_real')
-        if param_real_tc is not None: FastC.HOOK['param_real_tc']= param_real_tc[1]
+        #test pour savoir si graph est une liste de dictionnaires (explicite local)
+        #ou juste un dictionnaire (explicite global, implicite)
+        if isinstance(graph, list): graphLoc=graph[0]
+        else: graphLoc=graph
+
+        for nOpass in range(1,Nbpass+1):
+            if (Nbpass==1): FilterPass=None
+            else:           FilterPass='pass'+str(nOpass)
+
+            PACK.miseAPlatDonorTree__(t, tc, graph=graphLoc['graphPass'+str(nOpass)], procDict=graphLoc['procDict'], nbpts_linelets=nbpts_linelets, FilterPass=FilterPass)
+
+            tmp= Internal.getNodeFromName1( tc, 'Pass'+str(nOpass) )
+            key = 'param_int_tc'+str(nOpass)
+            FastC.HOOK[key] = Internal.getNodeFromName1( tmp, 'Parameter_int' )[1]
+            param_real_tc = Internal.getNodeFromName1 (tmp, 'Parameter_real')
+            key = 'param_real_tc'+str(nOpass)
+            if param_real_tc is not None: FastC.HOOK[key] = param_real_tc[1]
+            else:  FastC.HOOK[key] = None
     else:
-        FastC.HOOK['param_real_tc'] = None
-        FastC.HOOK['param_int_tc']  = None
+        Nbpass=0
+        FastC.HOOK['param_real_tc1'] = None
+        FastC.HOOK['param_int_tc1']  = None
 
+    #nbr pass transfert
+    dtloc[12]=Nbpass
 
     if ssors is not []:
         FastC.HOOK['ssors'] = ssors
@@ -929,7 +824,7 @@ def warmup(t, tc, graph=None, infos_ale=None, Adjoint=False, tmy=None, list_grap
     if infos_ale is not None and len(infos_ale) == 3: nitrun = infos_ale[2]
     timelevel_target = int(dtloc[4])
 
-    _fillGhostcells(zones, tc, metrics, timelevel_target, ['Density'], nstep, ompmode, hook1,graphID, graphIBCD, procDict, isWireModel=isWireModel, graphInvIBCD_WM=graphInvIBCD_WM)
+    _fillGhostcells(zones, tc, metrics, timelevel_target, ['Density'], nstep, hook1, graph)
 
     #
     # initialisation Mut

@@ -63,7 +63,7 @@ C     &     .and.bc_type.ne.BCINFLOW.and.bc_type.ne.BCINJ1)
 
         idir   = param_int( pt_bc + BC_IDIR)
         nbdata = param_int( pt_bc + BC_NBDATA)
-
+        iptdata= param_int( param_int(PT_BC) + 1 + ndf + nb_bc)
 
        !calcul intersection sous domaine et fenetre CL
         call indice_cl_sdm(idir,npass,lskip,param_int( pt_bc+BC_TYPE),

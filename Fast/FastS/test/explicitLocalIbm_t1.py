@@ -1,7 +1,6 @@
 ## - Explicit local/local time stepping for flow past a square cylinder 3D -
 ## Note: mesh is "ugly"
 import Converter.Internal as Internal
-import Fast.PyTree as Fast
 import FastC.PyTree as FastC
 import FastS.PyTree as FastS
 import KCore.test as test
@@ -19,8 +18,8 @@ if not os.path.isfile(tFileName):
     tar.extractall(path=LOCAL)
     tar.close()
 
-t  = Fast.loadTree(tFileName)
-tc = Fast.loadTree(tcFileName)
+t  = FastC.loadTree(tFileName)
+tc = FastC.loadTree(tcFileName)
 
 NIT                        = 100   # number of iterations
 display_probe_freq         = 10    # iteration frequency to display modulo_verif

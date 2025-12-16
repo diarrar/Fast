@@ -5,7 +5,7 @@ import Connector.PyTree as X
 import Converter.Internal as Internal
 import Converter.Mpi as Cmpi
 import Converter.PyTree as C
-import Fast.PyTree as Fast
+import FastC.PyTree as FastC
 import FastS.PyTree as FastS
 import RigidMotion.PyTree as R
 import Transform.PyTree as T
@@ -50,18 +50,18 @@ numz2['scheme'] = 'ausmpred'
 # load t, tc
 fileTIn ='/tRotComp.cgns'
 fileTcIn='/tcRotComp.cgns'
-t,tc,ts,graph = Fast.load(LOCAL+fileTIn,LOCAL+fileTcIn)
+t,tc,ts,graph = FastC.load(LOCAL+fileTIn,LOCAL+fileTcIn)
 baseNameIBM   ='CARTESIAN_NEARBODY'
 baseNameBKGD  ='CARTESIAN_OFFBODY'
 
 
-Fast._setNum2Base(t, numb)
+FastC._setNum2Base(t, numb)
 for n in [baseNameIBM]:
     b = Internal.getNodeFromName1(t, n)
-    Fast._setNum2Zones(b, numz1)
+    FastC._setNum2Zones(b, numz1)
 for n in [baseNameBKGD]:
     b = Internal.getNodeFromName1(t, n)
-    Fast._setNum2Zones(b, numz2)
+    FastC._setNum2Zones(b, numz2)
 
 
 # load bodies
@@ -104,7 +104,7 @@ tBB = Cmpi.createBBoxTree(t)
 intersectionDict={}
 for z1 in Internal.getZones(Internal.getNodeFromName1(tBB,baseNameIBM)):
     for z2 in Internal.getZones(Internal.getNodeFromName1(tBB,baseNameBKGD)):
-        Fast._addPair(intersectionDict, z1[0], z2[0])
+        FastC._addPair(intersectionDict, z1[0], z2[0])
 
 procDict = None;
 graphX   = {}
@@ -113,13 +113,16 @@ graphX   = Cmpi.computeGraph(tBB, type='bbox2', t2=None, procDict=procDict, redu
 
 R._evalPositionIBC(tc,time0)
 
+FastC._attributeNoPassTransfer(tc, cutoff=5.e-10, verbose=0)
+
+graph = {'graphPass1': None, 'graphPass2': None, 'procDict': None, 'procList': None}
 (t, tc, metrics) = FastS.warmup(t, tc, graph)
 
 # Doivent etre apres le warmup
 dictOfADT={}
-(dictOfNobOfRcvZones,dictOfNozOfRcvZones)   = Fast.getDictOfNobNozOfRcvZones(t, intersectionDict)
-(dictOfNobOfRcvZonesC,dictOfNozOfRcvZonesC) = Fast.getDictOfNobNozOfRcvZones(tc, intersectionDict)
-(dictOfNobOfDnrZones,dictOfNozOfDnrZones)   = Fast.getDictOfNobNozOfDnrZones(tc, intersectionDict, dictOfADT,cartFilter='CARTESIAN',isIbmAle=True)
+(dictOfNobOfRcvZones,dictOfNozOfRcvZones)   = FastC.getDictOfNobNozOfRcvZones(t, intersectionDict)
+(dictOfNobOfRcvZonesC,dictOfNozOfRcvZonesC) = FastC.getDictOfNobNozOfRcvZones(tc, intersectionDict)
+(dictOfNobOfDnrZones,dictOfNozOfDnrZones)   = FastC.getDictOfNobNozOfDnrZones(tc, intersectionDict, dictOfADT,cartFilter='CARTESIAN',isIbmAle=True)
 
 # modifie la vitesse de reference (si M=0)
 cont  = Internal.getNodeFromType(t, 'ReferenceState_t')
@@ -181,7 +184,7 @@ for it in range(it0,NIT+it0):
     FastS._compute(t, metrics, it, tc, graph, layer="Python", ucData=ucData)
 
     if it%modulo_verif==0:
-        FastS.display_temporal_criteria(t, metrics, it, format='double')
+        FastS.display_temporal_criteria(t, metrics, it)
 
     Cmpi.barrier()
 
@@ -200,10 +203,14 @@ Internal._rmNodesByName(tc, '.Solver#ownData')
 Internal._rmNodesFromName(tc, 'Parameter_int')
 Internal._rmNodesFromName(tc, 'Parameter_real')
 test.testT(t,1)
-test.testT(tc,2)
 
-#Cmpi.convertPyTree2File(t , LOCAL+'/t_restart.cgns')
-#Cmpi.convertPyTree2File(tc, LOCAL+'/tc_restart.cgns')
+#On remets les noms de noeud oldschool
+for z in Internal.getZones(tc):
+    subRegions  =  Internal.getNodesFromType1(z, 'ZoneSubRegion_t')
+    for s in subRegions:
+        s[0]=s[0][0:-6]
+
+test.testT(tc,2)
 
 os.remove(LOCAL+'/tRotComp.cgns')
 os.remove(LOCAL+'/tcRotComp.cgns')

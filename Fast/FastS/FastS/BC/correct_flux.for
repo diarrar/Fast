@@ -35,10 +35,11 @@ c***********************************************************************
      & ti_df(*),tj_df(*),tk_df(*),vol_df(*), psi(*), param_real(0:*)
 
 C     Var loc
-      INTEGER_E ndf,lf,npass,incijk, nb_bc, iptdata, flag_correct_flu
+      INTEGER_E ndf,lf,npass,incijk, nb_bc, iptdata, iptdata_flu
+      INTEGER_E flag_correct_flu
       INTEGER_E bc_type, pt_bc,pt_bcs, idir,nbdata,lskip,size_data
       INTEGER_E ind_CL(6), ind_CL119(6), inc_bc(3), nitcfg, cycl
-      INTEGER_E sampling, nitrun, iflow,lapply, iptfen
+      INTEGER_E sampling, nitrun, iflow,lapply, iptfen, size_data_flu
       REAL_E mobile_coef
  
       cycl=param_int(NSSITER)/param_int(LEVEL)
@@ -61,7 +62,9 @@ C     Var loc
           lapply=1
         elseif(bc_type.eq.BCFluxOctreeF ) then
           lapply=2
-        elseif(bc_type.eq.BCFluxOctreeC.and.nitcfg.gt.1) then
+        elseif( bc_type.eq.BCFluxOctreeC
+c     &         .and.(nitcfg.gt.1.or.nitrun.gt.0)) then
+     &         .and.(nitcfg.gt.1)) then
           lapply=3
         endif
 
@@ -75,13 +78,17 @@ C     Var loc
 
         idir   = param_int( pt_bc + BC_IDIR)
         nbdata = param_int( pt_bc + BC_NBDATA)
+        iptdata= param_int( param_int(PT_BC) + 1 + ndf + nb_bc)
         !!size_data = param_int( pt_bc + BC_NBDATA + !1)/(param_int(NEQ)*2)  ! tentative pour envoie pente
-        iptdata   = 0
         size_data = 0
+        size_data_flu = 1
+        iptdata_flu   = 1   ! on pointe sur 1ere case au cas ou tab flux pas defini: 
+                           ! evite souci memoire en dbx
         if (nbdata.ne.0.and.(lapply.eq.2.or.lapply.eq.3)) then
-           iptdata   = param_int( pt_bcs + 1 + ndf + nb_bc) + 3  ! on skip les 3 ratio
+           iptdata_flu = param_int( pt_bcs + 1 + ndf + nb_bc) + 3  ! on skip les 3 ratio
            !size_data = param_int( pt_bc + BC_NBDATA + 1)/param_int(NEQ)
-           size_data = (param_int(pt_bc+BC_NBDATA + 2)-3)/param_int(NEQ) ! la size des tableau est cumulative: Size(tab1)= OK, size(tab2)=  sz(tab1)+sz(tab2)
+           size_data_flu = (param_int(pt_bc+BC_NBDATA + 2)-3)/param_int(NEQ) ! la size des tableau est cumulative: Size(tab1)= OK, size(tab2)=  sz(tab1)+sz(tab2)
+           size_data     = size_data_flu
         endif
 
         !calcul intersection sous domaine et fenetre CL
@@ -141,46 +148,45 @@ c     & param_int(pt_bc + BC_FEN: pt_bc + BC_FEN+5)
         if(lapply.eq.4) iflow=1 ! on corrige juste les flux euler pour paroi +Roe 
 
 
-c      write(*,'(a,i4,a,4i4,a,i3,a,i3,a,i3,a,i3)')
+c      write(*,'(a,i4,a,4i4,a,i3,a,i3,a,i3,a,i3,a,2i3)')
 c     & 'nd=',ndom,' indCL=',ind_CL(1:4),' lapply=',
-c     & lapply,' nstep=',nitcfg,' ndf=',ndf, ' idir=', idir
-      !if(ndom.eq.0) write(*,*)'indbc', inc_bc(1:3)
+c     & lapply,' nstep=',nitcfg,' ndf=',ndf, ' idir=', idir, '  ijkv',
+c     &  param_int(IJKV),param_int(IJKV+1) 
+c      !if(ndom.eq.0) write(*,*)'indbc', inc_bc(1:3)
 
         if(param_int(KFLUDOM).eq.2) then
  
           call corr_flusenseur_select(ndom, ithread, idir, bc_type,
-     &                          size_data, iflow,
-     &                          param_int, param_real,
-     &                          ind_CL, inc_bc,
-     &                          rop, drodm  , wig, param_real(iptdata),
-     &                          venti, ventj, ventk,
-     &                          ti,tj,tk,vol, xmut)
+     &                       size_data_flu, iflow,
+     &                       param_int, param_real,
+     &                       ind_CL, inc_bc,
+     &                       rop, drodm  , wig, param_real(iptdata_flu),
+     &                       venti, ventj, ventk,
+     &                       ti,tj,tk,vol, xmut)
 
         elseif(param_int(KFLUDOM).eq.1) then
 
           call corr_fluausm_select(ndom, ithread, idir, bc_type,
-     &                          size_data, iflow,
-     &                          param_int, param_real,
-     &                          ind_CL, inc_bc,
-     &                          rop, drodm  , wig, param_real(iptdata),
-     &                          venti, ventj, ventk,
-     &                          ti,tj,tk,vol, xmut)
+     &                       size_data_flu, iflow,
+     &                       param_int, param_real,
+     &                       ind_CL, inc_bc,
+     &                       rop, drodm  , wig, param_real(iptdata_flu),
+     &                       venti, ventj, ventk,
+     &                       ti,tj,tk,vol, xmut)
 
         elseif(param_int(KFLUDOM).eq.5) then
 
-
           call corr_fluroe_select(ndom, ithread, idir, bc_type,
-     &                          size_data, iflow,
-     &                          param_int, param_real,
-     &                          ind_CL, inc_bc,
-     &                          rop, drodm  , wig, param_real(iptdata),
-     &                          venti, ventj, ventk,
-     &                          ti,tj,tk,vol, xmut)
+     &                       size_data_flu, iflow,
+     &                       param_int, param_real,
+     &                       ind_CL, inc_bc,
+     &                       rop, drodm  , wig, param_real(iptdata_flu),
+     &                       venti, ventj, ventk,
+     &                       ti,tj,tk,vol, xmut)
 
         else
              call error('correct_flu$',70,1)
         endif
-
      
       !stokage et correction flux fait dans dans fct corr... pour flux
       !conservatif; Reste wall(roe) et wallmodel a faire

@@ -1,8 +1,8 @@
 # - FastIBM -
 # Euler, para, frontType=1
 import Apps.Fast.FastIBM as FastIBM
-import FastS.PyTree as FastS
 import Fast.PyTree as Fast
+import FastC.PyTree as FastC
 import Converter.PyTree as C
 import Converter.Internal as Internal
 import KCore.test as test
@@ -55,6 +55,7 @@ for b in Internal.getBases(tc):
 ####
 
 test.testT(tc, 1)
+FastC._attributeNoPassTransfer(tc, verbose=0, cutoff=1.e-12)
 
 # Compute
 numb = {}
@@ -69,22 +70,23 @@ numz["cfl"]                = 4.
 numz["scheme"]             = "roe_min"
 
 it0 = 0.; time0 = 0.; NIT = 300
-Fast._setNum2Base(t, numb); Fast._setNum2Zones(t, numz)
+FastC._setNum2Base(t, numb); FastC._setNum2Zones(t, numz)
 
-t, tc, metrics = FastS.warmup(t, tc)
+t, tc, metrics = Fast.warmup(t, tc)
+
 
 time_step = Internal.getNodeFromName(t, 'time_step')
 time_step = Internal.getValue(time_step)
 
 for it in range(NIT):
     if it%100 == 0: print("it %d / %d"%(it, NIT), flush=True)
-    FastS._compute(t, metrics, it, tc)
+    Fast._compute(t, metrics, it, tc)
     time0 += time_step
 
 Internal.createUniqueChild(t, 'Iteration', 'DataArray_t', value=NIT)
 Internal.createUniqueChild(t, 'Time', 'DataArray_t', value=time0)
-Fast.saveTree(t, LOCAL+'/restart.cgns', split='single', compress=0)
-Fast.saveTree(tc, LOCAL+'/tc_restart.cgns', split='single')
+FastC.saveTree(t, LOCAL+'/restart.cgns', split='single', compress=0)
+FastC.saveTree(tc, LOCAL+'/tc_restart.cgns', split='single')
 t = C.convertFile2PyTree(LOCAL+'/restart.cgns')
 Internal._rmNodesByName(t, '.Solver#Param')
 Internal._rmNodesByName(t, '.Solver#ownData')

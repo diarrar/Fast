@@ -1,12 +1,11 @@
 # - compute (pyTree) -
 # - reflexion d'un choc sur une plaque plane -
+import FastC.PyTree as FastC
+import Fast.PyTree as Fast
 import Generator.PyTree as G
 import Converter.PyTree as C
 import Converter.Internal as Internal
 import Initiator.PyTree as I
-import Fast.PyTree as Fast
-import FastS.PyTree as FastS
-import FastC.PyTree as FastC
 import Transform.PyTree as T
 import KCore.Adim as Adim
 import KCore.test as test
@@ -23,8 +22,6 @@ a = G.cart((0,0,0), (h,h,0.001), (N,int(N/4.1),1))
 a = Internal.addGhostCells(a, a, 2, adaptBCs=0)
 a = T.addkplane(a)
 C._addBC2Zone(a, 'wall', 'BCWallInviscid', 'jmin')
-#C._addBC2Zone(a, 'super', 'BCFarfield', 'imin', data=state1)
-#C._addBC2Zone(a, 'super', 'BCFarfield', 'jmax', data=state2)
 C._addBC2Zone(a, 'super', 'BCInflowSupersonic', 'jmax', data=state2)
 C._addBC2Zone(a, 'super', 'BCInflowSupersonic', 'imin', data=state1)
 C._addBC2Zone(a, 'extr', 'BCExtrapolate', 'imax')
@@ -37,15 +34,11 @@ numb = {'temporal_scheme':'explicit', 'ss_iteration':20}
 numz = {'time_step':0.0007*2., 'scheme':'ausmpred'}
 FastC._setNum2Base(t, numb)
 FastC._setNum2Zones(t, numz);
-#C.convertPyTree2File(t,'test.cgns')
-#(t, tc, metrics) = FastS.warmup(t, None)
-(t, tc, metrics) = Fast.warmup(t, None)
 
-#import sys; sys.exit()
+(t, tc, metrics) = Fast.warmup(t)
 
-#nit = 2300
 nit = 23
-#nit=1
+
 for it in range(nit):
     Fast._compute(t, metrics, it, NIT=100)
     #FastS._compute(t, metrics, it, NIT=1, layer='Python')

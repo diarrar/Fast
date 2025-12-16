@@ -1,7 +1,6 @@
 # include "FastS/fastS.h"
 # include "FastC/fastc.h"
 # include "FastS/param_solver.h"
-# include "connector.h"
 # include <string.h>
 //# include <CMP/include/pending_message_container.h>
 #ifdef _OPENMP
@@ -14,7 +13,6 @@
 
 using namespace K_FLD;
 using namespace std;
-using namespace K_CONNECTOR;
 using namespace K_FASTC;
 
 #undef TimeShow
@@ -37,7 +35,7 @@ E_Float time_init;
   E_Int& nidom        , E_Int& nitrun         , E_Int&  nitcfg    , E_Int&  nssiter, E_Int& it_target , E_Int&  first_it,
   E_Int& kimpli       , E_Int& lssiter_verif  , E_Int& lexit_lu   , E_Int& omp_mode, E_Int& layer_mode, E_Int& mpi,
   E_Int& nisdom_lu_max, E_Int& mx_nidom       , E_Int& ndimt_flt  ,
-  E_Int& threadmax_sdm, E_Int& mx_synchro,
+  E_Int& threadmax_sdm, E_Int& mx_synchro     , E_Int* iptdtloc   ,
   E_Int& nb_pulse     , 
   E_Float& temps,
   E_Int* ipt_ijkv_sdm  ,
@@ -59,7 +57,7 @@ E_Float time_init;
   E_Float*   iptroflt        , E_Float*   iptroflt2       , E_Float*  iptwig       , E_Float*   iptstat_wig  ,
   E_Float*   iptdrodm        , E_Float*   iptcoe          , E_Float*  iptrot       , E_Float**& iptdelta , E_Float**& iptro_res,
   E_Float**& iptdrodm_transfer, 
-  E_Int*&   param_int_tc , E_Float*& param_real_tc, E_Int*& linelets_int, E_Float*& linelets_real)
+  E_Int**    int_tc           , E_Float** real_tc         , E_Int*& linelets_int, E_Float*& linelets_real)
 
  {
 
@@ -116,13 +114,11 @@ E_Float time_init;
       E_Int numpassage = 1;
       //Raccord X
       E_Float* ipt_timecount = NULL;
-if( param_int_tc != NULL)
-  { 
-      K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, param_int_tc,
-			      param_real_tc, param_int, param_real, ipt_omp, linelets_int, linelets_real,
-         		      it_target, nidom, ipt_timecount, mpi, nitcfg , nssiter, rk, exploc, numpassage);
-  } 
-   
+      for (E_Int nopass = 0; nopass < iptdtloc[12]; nopass++)
+        {
+         K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, int_tc[nopass], real_tc[nopass] , param_int, param_real, ipt_omp,
+                                     linelets_int, linelets_real, it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage, nopass );
+        }
 
 
 /****************************************************
@@ -212,14 +208,11 @@ if( param_int_tc != NULL)
    iptkrylov_transfer[nd] = matvec_b;
   }
 
-
-      //Raccord X
-if( param_int_tc != NULL)
-  { 
-      K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, param_int_tc,
-			      param_real_tc, param_int, param_real, ipt_omp, linelets_int, linelets_real,
-         		      it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage);
-  } 
-   
+  //Raccord X
+  for (E_Int nopass = 0; nopass < iptdtloc[12]; nopass++)
+    {
+      K_FASTC::setInterpTransfersFast(iptkrylov_transfer, vartype, int_tc[nopass], real_tc[nopass] , param_int, param_real, ipt_omp,
+                                    linelets_int, linelets_real, it_target, nidom, ipt_timecount, mpi, nitcfg, nssiter, rk, exploc, numpassage, nopass );
+    }
 
  }

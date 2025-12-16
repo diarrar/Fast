@@ -4,10 +4,15 @@
 cpp_srcs = ['FastC/checkNumericsValue.cpp',
             'FastC/getRange.cpp',
             'FastC/Init/initNuma.cpp',
+            'FastC/Init/initNumaTransfer.cpp',
             'FastC/Metric/init_metric.cpp',
             'FastC/ALE/motionlaw.cpp',
             'FastC/Compute/souszones_list.cpp',
             'FastC/HPC_LAYER/distributeThreads.cpp',
+            'FastC/TRANSFERT/setInterpTransfers.cpp',
+            'FastC/TRANSFERT/setInterpTransfersD.cpp',
+            'FastC/TRANSFERT/IBC/setIBCTransfers.cpp',
+            'FastC/IBC/updateNatureForIBMGhost.cpp',
             'FastC/Com/setInterpTransfersFast.cpp']
 
 #==============================================================================

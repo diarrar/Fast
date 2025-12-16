@@ -4,9 +4,11 @@ import Fast.FastIBM as FastIBM
 import Converter.Internal as Internal
 import KCore.test as test
 
+#import sys; sys.exit()
 ##PREP
 tb = FastIBM.naca0012(snear=0.005, alpha=0.)
 t,tc = FastIBM.prepareIBMData(tb, None, None, vmin=21, expand=3, frontType=1)
+
 
 ####
 # The following lines are to avoid regression since the bug fix for duplicate information in tc

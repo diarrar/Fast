@@ -20,7 +20,6 @@
 # include "FastS/fastS.h"
 # include "FastC/fastc.h"
 # include "FastS/param_solver.h"
-# include "connector.h"
 # include <string.h>
 #ifdef _OPENMP
 #include <omp.h>
