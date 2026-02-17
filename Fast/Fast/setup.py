@@ -1,37 +1,53 @@
-from distutils.core import setup, Extension
-#from setuptools import setup, Extension
-import os
-
 #=============================================================================
-# Fast requires:
+# FastS requires:
 # ELSAPROD variable defined in environment
 # C++ compiler
 # Fortran compiler: defined in config.py
 # Numpy
-# KCore library
+# KCore
 #=============================================================================
+import os
+from setuptools import setup, Extension
+from importlib.util import spec_from_file_location, module_from_spec
+
+def loadModuleFromPath(modname):
+    # Load a Python file by filesystem path (PEP-517 isolated build requirement)
+    helper = os.path.join(os.path.dirname(__file__), modname + ".py")
+    spec = spec_from_file_location(modname, helper)
+    mod = module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+# Compiler settings must be set in installBase.py / installBaseUser.py
+Dist = loadModuleFromPath('../../../Cassiopee/Cassiopee/KCore/Dist')
+installBase = loadModuleFromPath('../../../Cassiopee/Cassiopee/KCore/installBase')
+Dist.setConfigDict(installBase.installDict)
+additionalLibPaths = Dist.getAdditionalLibPaths()
+additionalIncludePaths = Dist.getAdditionalIncludePaths()
+additionalLibs = Dist.getAdditionalLibs()
 
 # Write setup.cfg file
-import KCore.Dist as Dist
 Dist.writeSetupCfg()
 
 # Test if numpy exists =======================================================
 (numpyVersion, numpyIncDir, numpyLibDir) = Dist.checkNumpy()
 
 # Test if kcore exists =======================================================
-(kcoreVersion, kcoreIncDir, kcoreLibDir) = Dist.checkKCore()
+(kcoreVersion, kcoreIncDir, kcoreLibDir) = Dist.checkModuleCassiopee("KCore")
 
 # Test if xcore exists =======================================================
-(xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkXCore()
+(xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkModuleCassiopee("XCore")
 
 # Test if connector exists =====================================================
-(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkConnector()
+(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkModuleCassiopee("Connector")
 
-# Test if fastc exists =====================================================
-(fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkFastC()
+# Test if fast exists =======================================================
+#(fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkFastC()
+(fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkModuleFast("FastC")
 
 # Test if fasts exists =====================================================
-(fastsVersion, fastsIncDir, fastsLibDir) = Dist.checkFastS()
+#(fastsVersion, fastsIncDir, fastsLibDir) = Dist.checkFastS()
+(fastsVersion, fastsIncDir, fastsLibDir) = Dist.checkModuleFast("FastS")
 
 # Test if fastp exists =====================================================
 #(fastpVersion, fastpIncDir, fastpLibDir) = Dist.checkFastP()
@@ -40,7 +56,6 @@ Dist.writeSetupCfg()
 #(fastlbmVersion, fastlbmIncDir, fastlbmLibDir) = Dist.checkFastLBM()
 #(fastaslbmVersion, fastaslbmIncDir, fastaslbmLibDir) = Dist.checkFastASLBM()
 
-from KCore.config import *
 
 # Test if libmpi exists ======================================================
 (mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi(additionalLibPaths, additionalIncludePaths)
@@ -60,9 +75,9 @@ libraries = ["fast", "fasts", "fastc", "connector", "xcore", "kcore"]
 #libraryDirs = ["build/"+prod, kcoreLibDir, xcoreLibDir, connectorLibDir, fastcLibDir,fastsLibDir, fastlbmLibDir]
 #includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, connectorIncDir, fastcIncDir, fastsIncDir, fastlbmIncDir]
 #libraries = ["fast", "fasts", "fastlbm", "fastc", "connector", "xcore", "kcore"]
-(ok, libs, paths) = Dist.checkFortranLibs([], additionalLibPaths)
+(ok, libs, paths) = Dist.checkFortranLibs()
 libraryDirs += paths; libraries += libs
-(ok, libs, paths) = Dist.checkCppLibs([], additionalLibPaths)
+(ok, libs, paths) = Dist.checkCppLibs()
 libraryDirs += paths; libraries += libs
 
 ADDITIONALCPPFLAGS=[]

@@ -1,8 +1,7 @@
 import os
 import KCore.Dist as Dist
-from KCore.config import *
 #==============================================================================
-# FastC requires:
+# FastS requires:
 # ELSAPROD variable defined in environment
 # C++ compiler
 # Fortran compiler: defined in config.py
@@ -20,30 +19,34 @@ installPath = Dist.getInstallPath(prefix)
 # Python ======================================================================
 (pythonVersion, pythonIncDir, pythonLibDir, pythonLibs) = Dist.checkPython()
 
-# Test if numpy exists =======================================================
+# Test if numpy exists ======================================================
 (numpyVersion, numpyIncDir, numpyLibDir) = Dist.checkNumpy()
 
 # Test if kcore exists =======================================================
-(kcoreVersion, kcoreIncDir, kcoreLibDir) = Dist.checkKCore()
+(kcoreVersion, kcoreIncDir, kcoreLibDir) = Dist.checkModuleCassiopee("KCore")
 
 # Test if xcore exists =======================================================
-(xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkXCore()
+(xcoreVersion, xcoreIncDir, xcoreLibDir) = Dist.checkModuleCassiopee("XCore")
 
-# Test if connector exists ==================================================
-(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkConnector()
+# Test if connector exists =====================================================
+(connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkModuleCassiopee("Connector")
+
+
+f77compiler = Dist.getFromConfigDict("f77compiler", "gfortran")
+additionalLibPaths = Dist.getAdditionalLibPaths()
+additionalIncludePaths = Dist.getAdditionalIncludePaths()
+additionalLibs = Dist.getAdditionalLibs()
 
 # Test if libmpi exists ======================================================
 (mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi(additionalLibPaths, additionalIncludePaths)
-
-from KCore.config import *
 
 # Setting libraryDirs and libraries ===========================================
 libraryDirs = ['..', '.', pythonLibDir, kcoreLibDir, xcoreLibDir]
 includeDirs = [numpyIncDir, kcoreIncDir, xcoreIncDir, pythonIncDir]
 libraries = ["kcore", "xcore"]
-(ok, libs, paths) = Dist.checkFortranLibs([], additionalLibPaths)
+(ok, libs, paths) = Dist.checkFortranLibs()
 libraryDirs += paths; libraries += libs
-(ok, libs, paths) = Dist.checkCppLibs([], additionalLibPaths)
+(ok, libs, paths) = Dist.checkCppLibs()
 libraryDirs += paths; libraries += libs
 
 if mpi:
