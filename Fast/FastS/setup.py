@@ -45,7 +45,7 @@ Dist.writeSetupCfg()
 (fastcVersion, fastcIncDir, fastcLibDir) = Dist.checkModuleFast("FastC")
 
 # Test if libmpi exists ======================================================
-(mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi(additionalLibPaths, additionalIncludePaths)
+(mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi()
 
 # Compilation des fortrans ====================================================
 prod = os.getenv("ELSAPROD")
