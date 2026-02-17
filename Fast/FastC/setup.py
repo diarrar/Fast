@@ -42,7 +42,7 @@ Dist.writeSetupCfg()
 (connectorVersion, connectorIncDir, connectorLibDir) = Dist.checkModuleCassiopee("Connector")
 
 # Test if libmpi exists ======================================================
-(mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi(additionalLibPaths, additionalIncludePaths)
+(mpi, mpiIncDir, mpiLibDir, mpiLibs) = Dist.checkMpi()
 
 prod = os.getenv("ELSAPROD")
 if prod is None: prod = 'xx'
