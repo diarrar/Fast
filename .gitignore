@@ -23,3 +23,11 @@ ValidData*
 *.dat
 *.swo
 *.swp
+
+# Generated flux routines from templates
+Fast/FastS/FastS/Compute/ROE/*/flu*.for
+Fast/FastS/FastS/Compute/AUSM/*/flu*.for  
+Fast/FastS/FastS/Compute/SENSOR/*/flu*.for
+Fast/FastS/FastS/Compute/ROE/*select.for
+Fast/FastS/FastS/Compute/AUSM/*select.for
+Fast/FastS/FastS/Compute/SENSOR/*select.for

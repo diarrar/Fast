@@ -83,7 +83,7 @@ env.Replace(CFLAGS=Dist.getCArgs()+ADDITIONALCPPFLAGS)
 #=============================================================================================
 
 # additional fortran preprocessing args
-addFPPArgs = '-D_OPENMP4 -D_OPENMP -DE_SCALAR_COMPUTER -DE_OMP_SOUS_DOMAIN'
+addFPPArgs = '-D_OPENMP4 -D_OPENMP -DE_SCALAR_COMPUTER -DE_OMP_SOUS_DOMAIN -D_OPENMP_GPU_OFFLOAD'
 # additional fortran compiler flags
 addFFlags = []
 cacheLine = Dist.getCacheLine()
@@ -103,6 +103,14 @@ if f77compiler == 'ifort':
    if version[0] >= 17:
       addFFlags += ['-qopt-report5', '-qopt-report-phase=loop,vec,cg', '-qopt-report-embed',  '-unroll0']
    else: addFFlags += ['-unroll0']
+   # Add OpenMP offloading support
+   addFFlags += ['-qopenmp', '-qopenmp-offload=generic']
+elif f77compiler == 'gfortran':
+   # Add OpenMP offloading support for gfortran
+   # Use environment variable for offload target or default to disable for compatibility
+   import os
+   offload_target = os.environ.get('OMP_OFFLOAD_TARGET', 'disable')
+   addFFlags += ['-fopenmp', '-foffload=' + offload_target]
  
 env = Dist.createFortranBuilder(env, dirs=[fastcIncDir, "."], 
    additionalPPArgs=addFPPArgs, additionalFortranArgs=addFFlags)

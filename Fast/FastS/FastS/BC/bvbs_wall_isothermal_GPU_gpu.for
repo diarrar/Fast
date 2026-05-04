@@ -26,7 +26,10 @@ c***********************************************************************
 
 #include "FastS/param_solver.h"
 
-      INTEGER_E idir,lrhs, neq_mtr, ind_loop(6), param_int(0:*)
+      INTEGER_E param_int(0:136)
+
+      INTEGER_E idir,lrhs, neq_mtr, ind_loop(6)
+      INTEGER_E param_int(0:136)
 
       REAL_E x( param_int(NDIMDX_XYZ) ),y( param_int(NDIMDX_XYZ) ),
      &       z( param_int(NDIMDX_XYZ) ),random(size_data)
@@ -37,7 +40,7 @@ c***********************************************************************
       REAL_E tijk   (param_int(NDIMDX_MTR ), neq_mtr             )
       REAL_E state(param_int(NEQ))
       REAL_E mobile_coef, c4,c5,c6 
-      REAL_E param_real(0:*)
+      REAL_E param_real(0:74)
       REAL_E lund_param(5)
 
 C...  Valeurs des grandeurs thermo imposees  (insert1)
@@ -81,6 +84,32 @@ c......determine la forme des tableau metrique en fonction de la nature du domai
       call shape_tab_mtr(neq_mtr, param_int, idir,
      &                   ic,jc,kc,kc_vent,
      &                   ci_mtr,cj_mtr,ck_mtr,ck_vent,c_ale)
+
+#ifdef _OPENMP_GPU_OFFLOAD
+C     Pre-compute parameter values to avoid array access within GPU target region
+C     This fixes AMD GPU memory access faults by eliminating parameter array access in GPU kernels
+      INTEGER_E nijk_val, nijk1_val, nijk2_val, nijk3_val, nijk4_val
+      INTEGER_E nijk_mtr_val, nijk_mtr1_val, nijk_mtr2_val, nijk_mtr3_val, nijk_mtr4_val  
+      INTEGER_E nijk_vent_val, nijk_vent1_val, nijk_vent2_val, nijk_vent3_val, nijk_vent4_val
+
+      nijk_val = param_int(NIJK)
+      nijk1_val = param_int(NIJK+1) 
+      nijk2_val = param_int(NIJK+2)
+      nijk3_val = param_int(NIJK+3)
+      nijk4_val = param_int(NIJK+4)
+
+      nijk_mtr_val = param_int(NIJK_MTR)
+      nijk_mtr1_val = param_int(NIJK_MTR+1)
+      nijk_mtr2_val = param_int(NIJK_MTR+2) 
+      nijk_mtr3_val = param_int(NIJK_MTR+3)
+      nijk_mtr4_val = param_int(NIJK_MTR+4)
+
+      nijk_vent_val = param_int(NIJK_VENT)
+      nijk_vent1_val = param_int(NIJK_VENT+1)
+      nijk_vent2_val = param_int(NIJK_VENT+2)
+      nijk_vent3_val = param_int(NIJK_VENT+3) 
+      nijk_vent4_val = param_int(NIJK_VENT+4)
+#endif
 
       c_ale = c_ale*mobile_coef
       if(lrhs.eq.1) c_ale = 0.
