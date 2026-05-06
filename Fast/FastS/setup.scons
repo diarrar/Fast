@@ -82,8 +82,19 @@ env.Replace(CFLAGS=Dist.getCArgs()+ADDITIONALCPPFLAGS)
 
 #=============================================================================================
 
+# GPU offload support: set GPU_VENDOR=nvidia or GPU_VENDOR=amd in environment.
+# When enabled:
+#   - E_SCALAR_COMPUTER and E_OMP_SOUS_DOMAIN are removed (CPU-only vectorisation path)
+#   - _GPU_OFFLOAD is added so loopGpu_begin.for emits !$OMP TARGET directives
+#   - Compiler flags for nvfortran (NVIDIA HPC SDK) or amdflang (ROCm) are set
+gpu_vendor = os.environ.get('GPU_VENDOR', '').lower()
+
 # additional fortran preprocessing args
-addFPPArgs = '-D_OPENMP4 -D_OPENMP -DE_SCALAR_COMPUTER -DE_OMP_SOUS_DOMAIN'
+if gpu_vendor in ('nvidia', 'amd'):
+    # GPU path: drop CPU-only flags, activate OpenMP target offload
+    addFPPArgs = '-D_OPENMP4 -D_OPENMP -D_GPU_OFFLOAD'
+else:
+    addFPPArgs = '-D_OPENMP4 -D_OPENMP -DE_SCALAR_COMPUTER -DE_OMP_SOUS_DOMAIN'
 # additional fortran compiler flags
 addFFlags = []
 cacheLine = Dist.getCacheLine()
@@ -97,14 +108,29 @@ corePerSock = Dist.getCorePerSocket()
 if corePerSock== 1: addFPPArgs += ' -DCORE_PER_SOCK=1'
 else: addFPPArgs += ' -DCORE_PER_SOCK=%d'%corePerSock
 
-if f77compiler == 'ifort':
-   version = Dist.getForVersion() # A utiliser version=(13,4)
-   addFFlags += [ '-fno-alias', '-fno-fnalias', '-ip' ]
-   if version[0] >= 17:
-      addFFlags += ['-qopt-report5', '-qopt-report-phase=loop,vec,cg', '-qopt-report-embed',  '-unroll0']
-   else: addFFlags += ['-unroll0']
- 
-env = Dist.createFortranBuilder(env, dirs=[fastcIncDir, "."], 
+if gpu_vendor == 'nvidia':
+    addFPPArgs += ' -D_GPU_NVIDIA'
+    # nvfortran (NVIDIA HPC SDK): -mp=gpu enables OpenMP target offload
+    # -gpu=cc80,cc90 targets A100 and H100; adjust for your hardware
+    addFFlags += ['-mp=gpu', '-gpu=cc80,cc90', '-Minfo=accel']
+    # Override CXX flags to enable OMP target in host C++ code
+    env.Replace(CXXFLAGS=Dist.getCppArgs()+ADDITIONALCPPFLAGS+['-mp=gpu'])
+elif gpu_vendor == 'amd':
+    addFPPArgs += ' -D_GPU_AMD'
+    # amdflang (ROCm/LLVM): -fopenmp-targets enables OpenMP target offload
+    # -march=gfx90a targets MI250X; adjust for your hardware (gfx90a, gfx942...)
+    addFFlags += ['-fopenmp-targets=amdgcn-amd-amdhsa',
+                  '-Xopenmp-target=amdgcn-amd-amdhsa', '-march=gfx90a']
+    env.Replace(CXXFLAGS=Dist.getCppArgs()+ADDITIONALCPPFLAGS+
+                ['-fopenmp-targets=amdgcn-amd-amdhsa'])
+elif f77compiler == 'ifort':
+    version = Dist.getForVersion() # A utiliser version=(13,4)
+    addFFlags += [ '-fno-alias', '-fno-fnalias', '-ip' ]
+    if version[0] >= 17:
+       addFFlags += ['-qopt-report5', '-qopt-report-phase=loop,vec,cg', '-qopt-report-embed',  '-unroll0']
+    else: addFFlags += ['-unroll0']
+
+env = Dist.createFortranBuilder(env, dirs=[fastcIncDir, "."],
    additionalPPArgs=addFPPArgs, additionalFortranArgs=addFFlags)
 
 # Scan fortran files and store dependencies
