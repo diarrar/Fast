@@ -33,6 +33,9 @@ class Chunk:
     source_kind: str
 
 
+MAX_CHUNK_ITERATIONS_FALLBACK = 100000  # Safety guard against malformed window settings.
+
+
 def _family_for_path(path: Path) -> str:
     families = ('BC', 'ROE', 'LES', 'POST', 'ADJOINT', 'Metric', 'Compute', 'FILTER', 'INTERP', 'STAT', 'Init', 'ALE')
     parts = {part.upper(): part for part in path.parts}
@@ -72,7 +75,7 @@ def _window_chunks(document: SourceDocument, lines: list[str], config: RAGConfig
             break
         start += config.chunk_stride_lines
         chunk_index += 1
-        if chunk_index > 100000:
+        if chunk_index > min(config.max_chunk_iterations, MAX_CHUNK_ITERATIONS_FALLBACK):
             break
     return chunks
 

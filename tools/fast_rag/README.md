@@ -1,6 +1,6 @@
 # Fast RAG
 
-Couche RAG locale pour `/home/runner/work/Fast/Fast`, pensée pour s'appuyer sur un backend LLM déjà déployé.
+Couche RAG locale pour la racine du dépôt Fast, pensée pour s'appuyer sur un backend LLM déjà déployé.
 
 ## Objectifs
 
@@ -15,7 +15,7 @@ Couche RAG locale pour `/home/runner/work/Fast/Fast`, pensée pour s'appuyer sur
 - dense embedding code: `nomic-ai/nomic-embed-code`
 - reranker: `BAAI/bge-reranker-v2-m3`
 
-Ces choix sont configurables dans `/home/runner/work/Fast/Fast/tools/fast_rag/fast_rag/config.py`.
+Ces choix sont configurables dans `tools/fast_rag/fast_rag/config.py`.
 
 ## Corpus indexé
 
@@ -33,7 +33,7 @@ Ces choix sont configurables dans `/home/runner/work/Fast/Fast/tools/fast_rag/fa
 ## Exemples
 
 ```bash
-cd /home/runner/work/Fast/Fast
+cd <repo_root>
 python -m tools.fast_rag.fast_rag.cli manifest
 python -m tools.fast_rag.fast_rag.cli search "farfield boundary condition" --top-k 5
 python -m tools.fast_rag.fast_rag.cli prompt "où est calculée la métrique ?" --top-k 4

@@ -254,15 +254,10 @@ class FastRAGPipeline:
                 lines.append(f'- {citation} :: {chunk.title}')
                 lines.append(chunk.text)
             sections.append('\n'.join(lines))
-        system_prompt = (
-            'Réponds uniquement à partir du contexte fourni. '
-            'Sépare clairement les faits observés dans le code et les hypothèses. '
-            'Si la preuve est insuffisante, dis "non confirmé dans les sources indexées".'
-        )
         return PromptPayload(
             intent=intent,
             query_variants=query_variants,
-            system_prompt=system_prompt,
+            system_prompt=self.config.system_prompt,
             context='\n\n'.join(sections),
             citations=tuple(citations),
         )

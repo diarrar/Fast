@@ -49,7 +49,13 @@ def _literal_list(path: Path, variable_name: str) -> list[str]:
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == variable_name:
-                    return [str(value.value) for value in node.value.elts]
+                    values: list[str] = []
+                    for value in getattr(node.value, 'elts', []):
+                        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                            values.append(value.value)
+                        elif isinstance(value, ast.Str):
+                            values.append(value.s)
+                    return values
     return []
 
 

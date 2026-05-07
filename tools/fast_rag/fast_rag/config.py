@@ -7,6 +7,11 @@ from pathlib import Path
 DEFAULT_EMBEDDING_MODEL = 'Qwen/Qwen3-Embedding-8B'
 DEFAULT_CODE_EMBEDDING_MODEL = 'nomic-ai/nomic-embed-code'
 DEFAULT_RERANKER_MODEL = 'BAAI/bge-reranker-v2-m3'
+DEFAULT_SYSTEM_PROMPT = (
+    'Réponds uniquement à partir du contexte fourni. '
+    'Sépare clairement les faits observés dans le code et les hypothèses. '
+    'Si la preuve est insuffisante, dis "non confirmé dans les sources indexées".'
+)
 
 
 @dataclass(frozen=True)
@@ -32,8 +37,10 @@ class RAGConfig:
     chunk_size_lines: int = 120
     chunk_stride_lines: int = 90
     max_results: int = 8
+    max_chunk_iterations: int = 100000
     retrieval_weights: RetrievalWeights = field(default_factory=RetrievalWeights)
     model_catalog: ModelCatalog = field(default_factory=ModelCatalog)
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT
 
     @property
     def docs_root(self) -> Path:
