@@ -45,7 +45,7 @@ python -m tools.fast_rag.fast_rag.cli benchmark /path/to/benchmark.jsonl --top-k
 Chaque ligne JSONL doit contenir:
 
 ```json
-{"question":"où est calculée la métrique ?","expected_paths":["/home/runner/work/Fast/Fast/Fast/FastC/FastC/Metric/skmtr.for"],"intent":"noyau_numerique"}
+{"question":"où est calculée la métrique ?","expected_paths":["Fast/FastC/FastC/Metric/skmtr.for"],"intent":"noyau_numerique"}
 ```
 
 ## Limites actuelles

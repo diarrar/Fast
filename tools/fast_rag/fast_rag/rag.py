@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import re
+import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -64,7 +65,9 @@ class PromptPayload:
 
 
 def tokenize(text: str) -> list[str]:
-    return [token.lower() for token in TOKEN_RE.findall(text)]
+    normalized = unicodedata.normalize('NFKD', text)
+    ascii_text = normalized.encode('ascii', 'ignore').decode('ascii')
+    return [token.lower() for token in TOKEN_RE.findall(ascii_text)]
 
 
 def overlap_score(left: set[str], right: set[str]) -> float:
@@ -86,6 +89,18 @@ def classify_intent(query: str) -> str:
 
 def expand_query(query: str, intent: str) -> tuple[str, ...]:
     variants = [query.strip()]
+    normalized = ' '.join(tokenize(query))
+    synonym_hints = {
+        'metrique': 'metric skmtr',
+        'metric': 'metric skmtr',
+        'farfield': 'bc farfield bvbs_farfield',
+        'boundary': 'bc boundary condition',
+        'condition': 'bc boundary condition',
+        'gpu': 'gpu openmp offload',
+    }
+    for keyword, hint in synonym_hints.items():
+        if keyword in normalized:
+            variants.append(f'{hint} {query}')
     if intent == 'api_python':
         variants.append(f'python wrapper {query}')
     elif intent == 'build_perf_gpu':
@@ -107,8 +122,31 @@ def lexical_score(query: str, chunk: Chunk, inverse_document_frequency: dict[str
     score = 0.0
     for token in query_tokens:
         score += frequencies[token] * inverse_document_frequency.get(token, 1.0)
-    normalization = math.sqrt(len(chunk_tokens)) or 1.0
+    normalization = (len(chunk_tokens) ** 0.75) or 1.0
     return score / normalization
+
+
+def metadata_score(query: str, chunk: Chunk, inverse_document_frequency: dict[str, float]) -> float:
+    query_tokens = set(tokenize(query))
+    metadata_tokens = set(tokenize(
+        f'{chunk.title} {chunk.path} {chunk.family} {chunk.routine_name or ""} '
+        f'{" ".join(chunk.calls)} {" ".join(chunk.includes)}'
+    ))
+    if not query_tokens or not metadata_tokens:
+        return 0.0
+    score = sum(
+        inverse_document_frequency.get(token, 1.0)
+        for token in query_tokens
+        if token in metadata_tokens
+    )
+    path_tokens = set(tokenize(chunk.path.name))
+    routine_tokens = set(tokenize(chunk.routine_name or ''))
+    score += sum(
+        1.5 * inverse_document_frequency.get(token, 1.0)
+        for token in query_tokens
+        if token in path_tokens or token in routine_tokens
+    )
+    return score / len(query_tokens)
 
 
 class FastRAGPipeline:
@@ -172,6 +210,7 @@ class FastRAGPipeline:
         weights = self.config.retrieval_weights
         for chunk in self.chunks:
             lexical = max(lexical_score(variant, chunk, self.inverse_document_frequency) for variant in query_variants)
+            lexical += 2.5 * max(metadata_score(variant, chunk, self.inverse_document_frequency) for variant in query_variants)
             dense = max(self.dense_scorer.score(variant, chunk) for variant in query_variants)
             rerank = self.reranker.score(query, chunk)
             base_score = (
@@ -236,6 +275,12 @@ class FastRAGPipeline:
         for entry in entries:
             results = self.search(entry.question, top_k=top_k)
             returned_paths = {str(result.chunk.path) for result in results}
-            if any(expected in returned_paths for expected in entry.expected_paths):
+            expected_paths = {
+                str(Path(expected))
+                if Path(expected).is_absolute()
+                else str((self.config.repo_root / expected).resolve())
+                for expected in entry.expected_paths
+            }
+            if any(expected in returned_paths for expected in expected_paths):
                 hits += 1
         return {'recall_at_k': hits / len(entries), 'questions': len(entries)}

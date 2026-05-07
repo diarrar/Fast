@@ -89,9 +89,10 @@ def _module_from_path(relative_path: Path) -> str:
 def _official_sources(repo_root: Path) -> Iterable[SourceDocument]:
     for module_name, relative_srcs in OFFICIAL_SOURCE_LISTS.items():
         srcs_path = repo_root / relative_srcs
+        source_root = srcs_path.parent
         for variable_name in ('for_srcs', 'cpp_srcs'):
             for relative_file in _literal_list(srcs_path, variable_name):
-                absolute_path = repo_root / relative_file
+                absolute_path = source_root / relative_file
                 if absolute_path.exists():
                     language = _language_from_path(absolute_path)
                     yield SourceDocument(

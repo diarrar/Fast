@@ -8,10 +8,10 @@ from pathlib import Path
 from tools.fast_rag.fast_rag.config import RAGConfig
 from tools.fast_rag.fast_rag.corpus import BenchmarkEntry, SourceDocument, discover_corpus, load_benchmark_entries
 from tools.fast_rag.fast_rag.fortran import chunk_fortran_source
-from tools.fast_rag.fast_rag.rag import FastRAGPipeline, SearchResult, classify_intent
+from tools.fast_rag.fast_rag.rag import FastRAGPipeline, classify_intent
 
 
-REPO_ROOT = Path('/home/runner/work/Fast/Fast')
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class FastRAGTests(unittest.TestCase):
@@ -60,14 +60,14 @@ class FastRAGTests(unittest.TestCase):
             path = Path(handle.name)
             handle.write(json.dumps({
                 'question': 'où est calculée la métrique ?',
-                'expected_paths': [str(REPO_ROOT / 'Fast/FastC/FastC/Metric/skmtr.for')],
+                'expected_paths': ['Fast/FastC/FastC/Metric/skmtr.for'],
                 'intent': 'noyau_numerique',
             }) + '\n')
         try:
             entries = load_benchmark_entries(path)
             self.assertEqual(entries, [BenchmarkEntry(
                 question='où est calculée la métrique ?',
-                expected_paths=(str(REPO_ROOT / 'Fast/FastC/FastC/Metric/skmtr.for'),),
+                expected_paths=('Fast/FastC/FastC/Metric/skmtr.for',),
                 intent='noyau_numerique',
             )])
             metrics = FastRAGPipeline(self.config).benchmark_recall_at_k(path, top_k=5)

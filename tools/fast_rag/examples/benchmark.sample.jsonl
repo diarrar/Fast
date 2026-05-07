@@ -1,2 +1,2 @@
-{"question":"où est calculée la métrique ?","expected_paths":["/home/runner/work/Fast/Fast/Fast/FastC/FastC/Metric/skmtr.for"],"intent":"noyau_numerique"}
-{"question":"quelle routine gère le farfield ?","expected_paths":["/home/runner/work/Fast/Fast/Fast/FastS/FastS/BC/bvbs_farfield.for"],"intent":"noyau_numerique"}
+{"question":"où est calculée la métrique ?","expected_paths":["Fast/FastC/FastC/Metric/skmtr.for"],"intent":"noyau_numerique"}
+{"question":"quelle routine gère le farfield ?","expected_paths":["Fast/FastS/FastS/BC/bvbs_farfield.for"],"intent":"noyau_numerique"}
