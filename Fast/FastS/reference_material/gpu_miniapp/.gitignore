@@ -1,0 +1,6 @@
+fortran/*.o
+fortran/*.mod
+fortran/miniapp_fortran
+results/
+cpp/build*/
+kokkos-src/

@@ -1,8 +1,9 @@
 # Portage GPU de Fast / FastS (NVIDIA + AMD) : analyse et plan
 
-Date : 2026-11-10. Périmètre : modules `FastC` et `FastS` du dépôt `Fast`
-(le cœur du solveur structuré est dans `FastS`, la couche HPC, les transferts
-et la gestion mémoire compacte sont dans `FastC`).
+Date : 2026-11-10 (révision 2 : option C++ / Kokkos, résultats de la
+mini-application de phase 0). Périmètre : modules `FastC` et `FastS` du
+dépôt `Fast` (le cœur du solveur structuré est dans `FastS`, la couche
+HPC, les transferts et la gestion mémoire compacte sont dans `FastC`).
 
 ---
 
@@ -19,24 +20,26 @@ et la gestion mémoire compacte sont dans `FastC`).
   concurrente.
 * La volumétrie brute est trompeuse : ~430 000 lignes de Fortran dans FastS,
   mais ~75 % sont **générées** par `generate_flu.py` à partir de quelques
-  gabarits (`template_FluxAndBalance.for`, `fluFaceEuler.for`, `fluvisq_*`).
-  Porter les gabarits + une cinquantaine de noyaux manuels suffit pour couvrir
-  l'essentiel.
+  gabarits. Porter les gabarits + une cinquantaine de noyaux manuels suffit
+  pour couvrir l'essentiel.
 * La première tentative (OpenMP offload) a laissé des briques réutilisables
-  (gabarit de flux en formulation "gather", macros de boucles `loopGpu_*`,
-  prototypes de CL `bvbs_*_GPU`) mais **n'a jamais été raccordée** : aucune
-  directive `target` dans le code, macro `E_GPU` jamais définie dans le build,
-  gabarit GPU désynchronisé du gabarit CPU.
-* Recommandation : **OpenMP target offload en Fortran** (portable NVIDIA via
-  `nvfortran`, AMD via `amdflang`/Cray `ftn`), avec les directives isolées
-  derrière des macros de la couche HPC pour pouvoir basculer vers OpenACC ou
-  un backend C++ si un compilateur fait défaut. Avancer par paliers :
-  explicite monozone → multizone/transferts/RANS → implicite (LU-SGS par
-  hyperplans ou GMRES) → optimisation et CI bi-constructeur.
-* Point dur n° 1 : la **phase implicite LU-SGS** (récurrence séquentielle en
-  i, j, k). Point dur n° 2 : la **maturité des compilateurs Fortran fixe +
-  préprocesseur C + offload** sur AMD, à qualifier en phase 0 avec une
-  mini-application avant tout engagement.
+  mais **n'a jamais été raccordée** (aucune directive `target`, macro `E_GPU`
+  jamais définie, gabarit GPU désynchronisé).
+* **Recommandation révisée** : ne pas réécrire Fast, mais réécrire le
+  **chemin chaud GPU en C++ généré, porté par Kokkos**, dans une
+  bibliothèque séparée `libfastgpu` à API C appelée par `gsdr3.cpp`. Le
+  Fortran CPU, l'orchestration C++ et Python restent en place. Le Fortran
+  + OpenMP target est conservé comme **plan B** si la qualification de
+  phase 0 sur machines réelles tournait à l'avantage du Fortran.
+* La **mini-application de phase 0** (`reference_material/gpu_miniapp/`)
+  existe dans les deux voies, reproduit l'arithmétique exacte du flux Roe
+  o3 et du LU-SGS de FastS, et valide les formulations GPU (gather,
+  hyperplans) à 1e-14 près contre les références CPU. Elle attend les
+  mesures sur un nœud NVIDIA et un nœud AMD.
+* Point dur n° 1 : la **phase implicite LU-SGS** (récurrence séquentielle
+  en i, j, k), résolue par balayage en hyperplans, validé dans la mini-app.
+  Point dur n° 2 : les **noyaux C++ sur CPU** ne remplacent pas le Fortran
+  vectorisé sans travail dédié ; on ne remplace donc pas le chemin CPU.
 
 ---
 
@@ -93,9 +96,10 @@ Entre ces étapes : `SYNCHRO_WAIT` / `SYNCHRO_GO` (verrous `lok`, routine
   `switchPointers__`), `drodm`, `coe`, `xmut`, `wig`, métriques `ti/tj/tk/vol`
   (`GET_TI`), vitesses d'entraînement `vent*`, coordonnées, `cellN`.
 * Chaque zone porte `param_int` / `param_real` (267 clés dans
-  `param_solver.h`) consommés par tous les noyaux.
-* Placement NUMA par premier toucher (`initNuma`) : équivalent GPU = `omp
-  target enter data` au `warmup`.
+  `param_solver.h`) consommés par tous les noyaux, déclarés partout en
+  taille supposée `(0:*)`.
+* Placement NUMA par premier toucher (`initNuma`) : équivalent GPU = copie
+  sur le device au `warmup`.
 
 ### 2.5 Volumétrie et taux de génération
 
@@ -111,13 +115,9 @@ Entre ces étapes : `SYNCHRO_WAIT` / `SYNCHRO_GO` (verrous `lok`, routine
 | POST, STAT, DISPLAY, Metric, Init | ~115 | ~9 100 | — | post-traitement (host) |
 
 758 sites de boucles passent déjà par des `#include` de la couche HPC
-(`loop*_begin.for` / `loop_end.for`) : c'est le point d'injection naturel
-des directives GPU. Les ~144 fichiers à boucles "en dur" sont majoritairement
-dans LU, DTLOC, BC et POST.
-
-Tout le Fortran est en **forme fixe `.for`** (2 264 fichiers, aucun `.f90`),
-préprocessé par le préprocesseur C (`#include`, `#ifdef`). Cette combinaison
-doit être validée explicitement avec chaque compilateur offload (voir § 5).
+(`loop*_begin.for` / `loop_end.for`). Tout le Fortran est en **forme fixe
+`.for`** (2 264 fichiers, aucun `.f90`), préprocessé par le préprocesseur
+C (`#include`, `#ifdef`).
 
 ---
 
@@ -128,163 +128,182 @@ commits de nettoyage de 2024, e866fa4 / bf8d96c) :
 
 | Brique | État | Verdict |
 |---|---|---|
-| `Compute/template_FluxAndBalance_gpu.for` | formulation **gather** (`assemble_drodm_mono.for`, flux recalculé des deux côtés avec `sens=±1`), boucles `DO i` + `!$OMP SIMD` | Idée correcte ; gabarit désynchronisé (pas de wiggle, `SENSORTYPE` vs `WIG_AMP`, signature différente). À réécrire à partir du gabarit CPU courant |
-| `Compute/loopGpu_begin.for`, `loopGpu_end.for`, `loop3dcartGpu_begin.for` (+ copies dans FastC/HPC_LAYER) | boucles `k,j,i` collapsables, branchées sous `#ifndef E_SCALAR_COMPUTER` | Réutilisable ; mais `E_SCALAR_COMPUTER` est toujours défini dans `setup.scons`, et il faut ajouter la directive `target teams distribute parallel do collapse(3)` |
-| `BC/bvbs_wall_viscous_GPU_gpu.for`, `bvbs_wall_isothermal_GPU_gpu.for` | prototypes de CL vectorisables | Non référencés dans `srcs.py` ; à reprendre comme modèle |
-| `FastC/Init/copy2gpu.cpp` | fonction Python `copy2gpu`, `#pragma omp target map` commenté, macro `E_GPU` | Squelette seulement ; à remplacer par une vraie gestion de résidence |
-| `generate_flu.py ... GPU` | option de génération avec le gabarit GPU | À conserver comme mécanisme |
+| `Compute/template_FluxAndBalance_gpu.for` | formulation **gather** (`assemble_drodm_mono.for`, flux recalculé des deux côtés avec `sens=±1`) | Idée correcte, reprise dans la mini-app ; gabarit désynchronisé du gabarit CPU |
+| `Compute/loopGpu_begin.for`, `loopGpu_end.for`, `loop3dcartGpu_begin.for` | boucles `k,j,i` collapsables sous `#ifndef E_SCALAR_COMPUTER` | Réutilisable pour le plan B ; `E_SCALAR_COMPUTER` est toujours défini dans `setup.scons` |
+| `BC/bvbs_wall_viscous_GPU_gpu.for`, `bvbs_wall_isothermal_GPU_gpu.for` | prototypes de CL vectorisables | Non référencés dans `srcs.py` ; modèle pour les CL |
+| `FastC/Init/copy2gpu.cpp` | `#pragma omp target map` commenté, macro `E_GPU` | Squelette seulement |
+| `generate_flu.py ... GPU` | option de génération avec le gabarit GPU | Mécanisme à conserver (il émettra du C++) |
 
-Pourquoi elle n'a pas abouti (lecture du code) : le build ne définit jamais
-`E_GPU`, aucune directive `target` n'existe, la gestion des données
-(`enter data`, `update`) n'a pas été écrite, les verrous/synchro n'ont pas
-été contournés, et le gabarit GPU a divergé du gabarit CPU. La tentative
-s'est arrêtée au stade "boucles réécrites" sans jamais exécuter sur GPU.
+Pourquoi elle n'a pas abouti : le build ne définit jamais `E_GPU`, aucune
+directive `target` n'existe, la gestion des données (`enter data`,
+`update`) n'a pas été écrite, les verrous/synchro n'ont pas été contournés,
+et le gabarit GPU a divergé du gabarit CPU.
 
 ---
 
 ## 4. Choix technologique
 
-### 4.1 Options comparées
+### 4.1 Pourquoi pas une réécriture complète de Fast
 
-| Option | NVIDIA | AMD | Effort | Commentaire |
-|---|---|---|---|---|
-| **OpenMP target (Fortran)** | `nvfortran -mp=gpu` : mûr | `amdflang -fopenmp --offload-arch=gfx9xx` (ROCm ≥ 6.2, flang LLVM) ; Cray `ftn` sur HPE | moyen | Garde le Fortran et les gabarits ; cohérent avec la tentative précédente et le style `!$OMP SIMD` déjà en place |
-| OpenACC (Fortran) | `nvfortran -acc` : très mûr | pas de support industriel AMD (GCC partiel, Clacc expérimental) | moyen | Non portable AMD → seulement comme backend alternatif NVIDIA |
-| `do concurrent` + stdpar | `nvfortran -stdpar` | en cours chez AMD/flang | faible | Pas de contrôle fin de la mémoire ni des réductions ; trop immature AMD |
-| Réécriture C++ (Kokkos / SYCL / HIP+CUDA) | oui | oui | élevé | Portabilité maximale, mais abandon du Fortran : à envisager seulement si la génération de code produit des noyaux C++ (voie de repli à long terme) |
+L'orchestration (`computePT.cpp`, `gsdr3.cpp`, transferts) est déjà en
+C++. Le Fortran CPU est tuné (blocage de cache, verrous fins) et validé :
+le réécrire n'apporte rien sur CPU et coûte un à deux ans de validation.
+Le post-traitement, les statistiques, l'explicite local et l'adjoint n'ont
+rien à faire sur GPU au départ. Le périmètre de la réécriture est donc le
+**chemin chaud GPU seulement**.
 
-### 4.2 Recommandation
+### 4.2 Pourquoi des noyaux C++ plutôt que du Fortran offloadé
 
-OpenMP target offload en Fortran, **avec une couche d'abstraction** :
+Quel que soit le langage, les noyaux GPU doivent être restructurés
+(gather ou flux de face, hyperplans LU, suppression des verrous) : il y
+aura deux chemins de calcul. La différence est leur avenir :
 
-* toutes les directives GPU passent par des `#include` de `FastC/HPC_LAYER`
-  (`GPU_LOOP_BEGIN.for`, `GPU_LOOP_END.for`, `GPU_REDUCTION.for`,
-  `GPU_DATA_*.for`) ;
-* une seule macro de build `E_GPU` (plus `E_GPU_OMP` / `E_GPU_ACC` pour le
-  backend), et `E_SCALAR_COMPUTER` devient le mode CPU explicite ;
-* le mode CPU reste strictement inchangé quand `E_GPU` n'est pas défini
-  (non-régression garantie, comparaison bit à bit possible en CPU).
+* Fortran + OpenMP target : deux variantes Fortran qui divergent, et une
+  dépendance durable aux compilateurs Fortran offload, dont `amdflang` sur
+  du F77 forme fixe préprocessé est le maillon faible.
+* C++ généré + Kokkos : compilateurs GPU C++ de premier rang chez les deux
+  constructeurs, langue de Cassiopee, outillage (profileurs, sanitizers),
+  possibilité à long terme d'un backend CPU unique. La mini-app montre
+  toutefois que ce dernier point n'est **pas gratuit** (voir § 9) : on ne
+  l'inscrit pas au périmètre.
 
-Compilateurs cibles de référence : NVIDIA HPC SDK (`nvfortran`, `nvc++`) et
-ROCm (`amdflang`, `amdclang++`), avec Cray CCE comme second AMD si la
-machine le fournit (Adastra MI250X/MI300A). `gfortran` offload sert de
-compilateur de contrôle fonctionnel uniquement (performances faibles).
+Le vrai actif du code est `generate_flu.py` et ses gabarits. Étendre le
+générateur pour émettre du C++ coûte quelques milliers de lignes ; les
+parties manuelles du chemin chaud sont très répétitives (40 routines LU
+d'un même motif, 21 CL quasi identiques) et se factorisent par templates.
+Estimation du chemin chaud GPU en C++ : 15 000 à 25 000 lignes.
+
+### 4.3 Modèles de programmation C++ comparés
+
+| Modèle | NVIDIA | AMD | Avis |
+|---|---|---|---|
+| **Kokkos** | oui | oui | Premier choix : vues avec espace mémoire explicite, `MDRangePolicy` pour les stencils 3D, `RangePolicy` par hyperplan pour le LU, backend OpenMP pour tester sur CPU, écosystème large |
+| CUDA/HIP natif derrière une fine couche de macros | oui | oui | Contrôle et performance maximaux, dépendance nulle, mais deux backends à entretenir et pas de CPU |
+| stdpar (`nvc++ -stdpar`, `hipstdpar`) | oui | oui | Trop implicite : mémoire managée imposée, pas de contrôle du lancement ; à réserver au post-traitement |
+| SYCL | via plugins | via plugins | Fonctionnel mais peu répandu dans les centres français ; Kokkos a un backend SYCL si besoin |
+| Fortran + OpenMP target (plan B) | `nvfortran` mûr | `amdflang` / Cray `ftn` à qualifier | Garde le Fortran ; dépend des compilateurs Fortran offload |
+
+### 4.4 Décision et critère de bascule
+
+Voie principale : **C++ généré + Kokkos**. Plan B : Fortran + OpenMP
+target. La mini-app de phase 0 fournit les deux implémentations ; la
+décision finale est prise sur les mesures NVIDIA et AMD selon ce critère :
+si le Fortran offloadé compile et tourne sur AMD avec moins de 30 % d'écart
+de performance par rapport à Kokkos et sans contournement de compilateur,
+le plan B redevient discutable au vu de l'effort moindre ; sinon la voie
+principale est confirmée.
 
 ---
 
 ## 5. Points durs et décisions de conception
 
-### 5.1 Décomposition et lancement des noyaux
+### 5.1 Architecture `libfastgpu`
 
-* Sur GPU : **1 rang MPI = 1 GPU**, et dans un rang, **une tâche = une zone**
-  entière (sous-zone unique, `ijkv_sdm = (1,1,1)`, `Nbre_thread_actif_loc =
-  1`). La boucle `navier_stokes_struct` devient une suite de noyaux
-  (viscosité → dt → src → flux_i → flux_j → flux_k → bilan → mise à jour),
-  chacun lancé sur toute la zone avec `collapse(3)`.
-* Les appels `SYNCHRO_WAIT` / `SYNCHRO_GO` / `verrou_*` sont compilés en
-  no-op sous `E_GPU` (les dépendances sont assurées par l'ordre des noyaux).
-* Pour recouvrir les petites zones et le multi-zone : lancements asynchrones
-  (`nowait` + `depend`) depuis une région host, ou un thread host par flux
-  GPU. Prévu en phase 4.
+* Bibliothèque C++ compilée avec le compilateur constructeur (nvcc /
+  hipcc via Kokkos), exposant une **API C** : `fastgpu_init`,
+  `fastgpu_map_zone(param_int, param_real, pointeurs host)`,
+  `fastgpu_rhs(zone, nstep)`, `fastgpu_lhs(zone)`, `fastgpu_bc(zone)`,
+  `fastgpu_update_host(zone, champ)`, `fastgpu_update_device(...)`,
+  `fastgpu_finalize`.
+* `gsdr3.cpp` l'appelle sous `E_GPU` ; le module Python et KCore restent
+  compilés avec gcc. Cela isole les chaînes de compilation et évite deux
+  runtimes OpenMP dans un même processus.
+* Les vues Kokkos sont **non gérées** (`Kokkos::View<double**,
+  LayoutLeft, Unmanaged>`) côté host sur les tableaux numpy compactés, et
+  gérées côté device ; la disposition `(ndimdx, neq)` avec `l` contigu est
+  conservée telle quelle (validé dans la mini-app).
 
-### 5.2 Bilan de flux sans course d'écriture
+### 5.2 Décomposition et lancement des noyaux
 
-Trois formulations possibles ; **choix à trancher par mesure en phase 1**
-sur un noyau Roe o3 3dfull :
+* **1 rang MPI = 1 GPU**, et dans un rang, **une tâche = une zone**
+  entière. La boucle `navier_stokes_struct` devient une suite de noyaux
+  (viscosité → dt → src → flux → bilan → mise à jour), chacun lancé sur
+  toute la zone avec `MDRangePolicy<Rank<3>>`.
+* Les appels `SYNCHRO_WAIT` / `SYNCHRO_GO` / `verrou_*` n'existent pas
+  dans `libfastgpu` ; les dépendances sont assurées par l'ordre des
+  noyaux et les `fence`.
+* Recouvrement des petites zones et multi-zone : instances d'espace
+  d'exécution Kokkos (flux CUDA/HIP) par zone, phase 4.
 
-1. **Gather** (gabarit GPU existant) : chaque cellule calcule ses 6 flux,
-   2× le coût flottant, zéro mémoire supplémentaire, pas de course. Souvent
-   gagnant sur GPU car le noyau est limité par la bande passante.
-2. **Flux de face stockés** : noyau par direction écrivant `flu_i(ndimdx,
-   neq)` puis noyau de bilan ; 1× le coût, +3·neq·ndimdx réels (≈ +60 % de
-   mémoire en SA), validation plus simple face au CPU.
-3. Atomics : à exclure (FP64 atomique lent, surtout AMD).
+### 5.3 Bilan de flux sans course d'écriture
 
-### 5.3 Phase implicite (LU-SGS)
+Deux formulations implémentées dans la mini-app, à départager sur GPU :
 
-* Les balayages `invlu_l` / `invlu_u` sont récursifs en i, j, k. Reformuler
-  en **balayage par hyperplans** `i + j + k = p` : boucle séquentielle sur
-  `p`, parallèle à l'intérieur du plan. Pour un bloc 100³ chaque plan a
-  ~10⁴ cellules : occupation suffisante. La `lu_dinv` (inverse de la
-  diagonale) est déjà locale.
-* Alternatives déjà présentes dans le code et exploitables : relaxation SSOR
-  (`NB_RELAX ≥ 2`, `invlussor_*`) qui se prête à une variante Jacobi par
-  couleurs, et le solveur Krylov (`IMPLICITSOLVER = 1`, `matvec`, GMRES) dont
-  les opérations sont naturellement parallèles.
-* Effet sur la convergence : l'ordre des hyperplans ne change pas le
-  résultat mathématique du LU-SGS classique (même récurrence) ; la variante
-  colorée change le préconditionneur et sera validée sur les cas Newton
-  (`PplaneNasaSAMesh136x96_t2..t7`).
-* Le mode `LU_MATCH` (recouvrement entre sous-domaines de threads) n'a plus
-  de sens avec une tâche par zone : désactivé sous `E_GPU`.
+1. **Gather** : chaque cellule calcule ses 6 flux, 2× le coût flottant,
+   zéro mémoire supplémentaire. Sur CPU : 2× plus lent que la formulation 2.
+2. **Flux de face stockés** : un noyau par direction écrit le flux de
+   chaque face, puis un noyau de bilan ; +3·neq·ndimdx réels.
 
-### 5.4 Résidence des données
+Les atomiques sont exclus (FP64 atomique lent, surtout AMD).
 
-* `warmup` : après `_compact`, `omp target enter data map(to:)` des tableaux
-  compactés de chaque zone (variables, métriques, `coe`, `drodm`, `xmut`,
-  `wig`, coordonnées, `cellN`, `param_int`, `param_real`, tableaux de
-  raccord `param_int_tc` / `param_real_tc`).
+### 5.4 Phase implicite (LU-SGS)
+
+* Balayage par **hyperplans** `i + j + k = p` : listes de cellules par
+  plan construites au `warmup`, boucle séquentielle sur `p`, parallèle à
+  l'intérieur du plan. Même récurrence que le LU-SGS lexicographique de
+  FastS : la mini-app le confirme à 4e-16 près.
+* Coût : 3N plans par balayage (190 à 64³), donc latence de lancement à
+  surveiller sur petites zones ; regroupement de plans ou exécution
+  asynchrone multi-zones en phase 4.
+* Alternatives présentes dans le code : relaxation SSOR (`NB_RELAX ≥ 2`),
+  solveur Krylov (`IMPLICITSOLVER = 1`, `matvec`, GMRES).
+* `LU_MATCH` (recouvrement entre sous-domaines de threads) n'a plus de
+  sens avec une tâche par zone.
+
+### 5.5 Résidence des données
+
+* `warmup` : après `_compact`, `fastgpu_map_zone` copie sur le device les
+  tableaux compactés de chaque zone (variables, métriques, `coe`,
+  `drodm`, `xmut`, `wig`, coordonnées, `cellN`, `param_int`,
+  `param_real`, tableaux de raccord).
 * La rotation `switchPointers__` échange des vues numpy sur la **même**
-  mémoire host déjà mappée : aucune copie. Il faut que la table
-  host → device reste valide (les trois niveaux de temps mappés).
+  mémoire host : la table host → device reste valide si les trois
+  niveaux de temps sont mappés.
 * Nouvelles fonctions Python : `FastS._updateHost(t, vars)` et
-  `FastS._updateDevice(t, vars)` (`omp target update`), appelées par les
-  sorties, `display_temporal_criteria`, `_computeStats`, la sauvegarde, et
-  les transferts Python. Sans appel explicite, tout reste sur le GPU.
-* Nettoyage à la destruction de l'arbre (`exit data`) ; détection d'accès
-  host non synchronisé en mode debug (`__DEBUG__`).
+  `FastS._updateDevice(t, vars)`, appelées par les sorties,
+  `display_temporal_criteria`, `_computeStats`, la sauvegarde et les
+  transferts Python. Sans appel explicite, tout reste sur le GPU.
 
-### 5.5 Conditions limites et transferts
+### 5.6 Conditions limites et transferts
 
-* CL : noyaux sur fenêtres (`ind_CL`) de petite taille, à lancer tels quels
-  sur GPU (21 types `bvbs_*`, les variantes `_d` adjointes exclues). Les CL
-  "fichier" (`inflow_fich`, Lund) lisent des données host : à mapper au
-  warmup. `correct_coins` idem.
-* Raccords / chimère / IBC : `setInterpTransfersFast` est un gather indirect
-  (listes de points donneurs/receveurs + coefficients) : parallèle par point
-  receveur, portable en `target teams distribute`. Les lois de paroi IBC
-  (`setIBCTransfersCommonVar2`, Musker, linelets) demandent une attention
-  particulière (boucles de Newton locales).
-* MPI : 1 rang par GPU. Étape 1 : tampons de communication recopiés sur le
-  host (`update`) autour des échanges existants ; étape 2 : MPI GPU-aware
-  (UCX / ROCm-aware) en passant directement les pointeurs device.
+* CL : noyaux sur fenêtres (`ind_CL`) de petite taille, 21 types
+  `bvbs_*`, factorisés par templates C++. Les CL "fichier" (`inflow_fich`,
+  Lund) lisent des données host : à mapper au warmup.
+* Raccords / chimère / IBC : `setInterpTransfersFast` est un gather
+  indirect (listes de points et coefficients), parallèle par point
+  receveur. Les lois de paroi IBC (Musker, linelets) ont des boucles de
+  Newton locales : noyau dédié.
+* MPI : 1 rang par GPU. Étape 1 : tampons recopiés sur le host autour
+  des échanges existants ; étape 2 : MPI GPU-aware.
 
-### 5.6 Réductions et diagnostics
+### 5.7 Réductions et diagnostics
 
-CFL min/max/moy (`cptst3`), résidus Newton (`lssiter_verif`,
-`residus_navier.h`), normes Krylov, débits/efforts (`compute_effort`,
-`cp_debitIBM`), senseur de wiggle : `reduction(min/max/+:)` sur les
-noyaux concernés. Les chronomètres par thread (`timer_omp`) et
-l'équilibrage dynamique n'ont pas de sens sur GPU : neutralisés.
+CFL min/max/moy (`cptst3`), résidus Newton (`lssiter_verif`), normes
+Krylov, débits/efforts : `parallel_reduce` Kokkos. Les chronomètres par
+thread (`timer_omp`) et l'équilibrage dynamique sont neutralisés sous
+`E_GPU`.
 
-### 5.7 Chaîne de compilation
+### 5.8 Chaîne de compilation
 
-* `setup.scons` (FastC, FastS) : variable d'environnement `FAST_GPU`
-  (`nvidia` / `amd` / `off`) + `FAST_GPU_ARCH` (`cc90`, `gfx942`, …) →
-  `-DE_GPU`, options `-mp=gpu -gpu=ccXX` ou `-fopenmp --offload-arch=gfxXXX`,
-  bibliothèques d'exécution (`libnvomp`, `libflang_rt`, `libomptarget`).
-* Dépendance Cassiopee : `KCore.Dist` fournit compilateurs et drapeaux
-  (`getDistUtilsCompilers`, `createFortranBuilder`). Il faudra soit un
-  correctif amont dans Cassiopee (ajout d'une option GPU), soit surcharger
-  localement `f77compiler` et les drapeaux dans `setup.scons`.
-* Mélange d'exécutables OpenMP : l'extension Python et KCore sont compilés
-  avec gcc/libgomp ; les noyaux Fortran offload avec le compilateur
-  constructeur. Deux runtimes OpenMP dans le même processus est un risque
-  réel (déjà rencontré avec Intel). Règle : compiler **tout** FastC/FastS
-  (C++ inclus) avec le compilateur constructeur quand `FAST_GPU` est actif.
-* Images de référence : Docker `cassiopee486/cassiopee:main` (base actuelle)
-  + couche `nvhpc` ou `rocm` ; servent à la CI.
+* `libfastgpu` : CMake + Kokkos (backends OpenMP pour les tests CPU, CUDA,
+  HIP), installé comme dépendance externe ; `setup.scons` de FastS lie la
+  bibliothèque et définit `E_GPU` quand `FAST_GPU=nvidia|amd`.
+* Le reste (FastC, FastS Fortran, extension Python) reste compilé par
+  `KCore.Dist` sans changement de chaîne.
+* Images de référence : Docker `cassiopee486/cassiopee:main` + couche
+  `nvhpc` ou `rocm` ; servent à la CI.
 
-### 5.8 Risques
+### 5.9 Risques
 
 | Risque | Impact | Atténuation |
 |---|---|---|
-| `amdflang` sur Fortran fixe + préprocesseur + offload (bugs, perf) | bloquant AMD | mini-app en phase 0 ; repli Cray `ftn` ; repli lointain : génération C++ |
-| Pression de registres des noyaux générés (Roe o3 + visqueux + SA inlinés) | perf | découper flux Euler / visqueux en noyaux séparés ; mesurer occupation ; `-gpu=maxregcount` |
-| Non-reproductibilité bit à bit CPU/GPU (ordre des sommes) | validation | tolérances dans les tests ; comparaison sur résidus et grandeurs intégrées |
-| Deux runtimes OpenMP dans un processus Python | plantages | toolchain unique sous `FAST_GPU` |
-| Gestion mémoire des zones (`switchPointers`, réallocation Python) | corruption silencieuse | assertions en mode debug ; API `_updateHost/Device` obligatoire ; tests dédiés |
-| Petites zones (multiblocs fins, chimère) | faible occupation | flux asynchrones multi-zones, fusion de noyaux (phase 4) |
+| Pression de registres des noyaux générés (Roe o3 + visqueux + SA) | perf | découper Euler / visqueux ; mesurer l'occupation ; `launch_bounds` |
+| Non-reproductibilité bit à bit CPU/GPU (ordre des sommes) | validation | tolérances dans les tests (1e-12 relatif démontré sur la mini-app) |
+| Deux chaînes de compilation (gcc pour Python, nvcc/hipcc pour `libfastgpu`) | intégration | API C, pas d'OpenMP host dans `libfastgpu` |
+| Gestion mémoire des zones (`switchPointers`, réallocation Python) | corruption silencieuse | assertions en mode debug ; API `_updateHost/Device` obligatoire |
+| Petites zones (multiblocs fins, chimère) | faible occupation | instances d'exécution par zone, fusion de noyaux (phase 4) |
+| Générateur Python à étendre pour émettre du C++ | effort initial | commencer par le gabarit Roe/AUSM 3dfull, généraliser ensuite |
+| Compétence C++/Kokkos de l'équipe | planning | formation courte ; mini-app comme modèle de code |
 
 ---
 
@@ -295,96 +314,87 @@ hors validation applicative ONERA.
 
 ### Phase 0 — Qualification et infrastructure (3 à 4 semaines)
 
-1. **Mini-application** : programme Fortran autonome dans
-   `FastS/reference_material/gpu_miniapp/` appelant un noyau généré
-   (`fluroe_lamin_o3_3dfull`) et `invlu_l/u` sur des données synthétiques,
-   compilable sans Cassiopee. Sert de banc de test compilateurs.
-2. Matrice compilateurs : `nvfortran` (HPC SDK courant), `amdflang` (ROCm
-   courant), Cray `ftn` si disponible, `gfortran` offload en contrôle. Points
-   à vérifier : forme fixe, `#include` imbriqués, `collapse(3)`, réductions,
-   `declare target` pour les petites fonctions (`shape_tab_mtr`, `inddm`).
-3. Build : options `FAST_GPU`/`FAST_GPU_ARCH` dans les deux `setup.scons`,
-   macro `E_GPU`, images Docker NVIDIA et AMD, job CI qui compile.
-4. Baseline de performance CPU (1 nœud) sur 3 cas : `computePT.py`
-   (Euler cartésien), `PplaneNasaSAMesh136x96_t1` (laminaire explicite),
-   `_t2`/`_t4` (implicite, SA) ; métrique : µs par cellule et par sous-pas.
-5. Décision formelle sur la formulation du bilan de flux (gather vs flux de
-   face) sur la mini-app.
+Fait dans ce dépôt (`reference_material/gpu_miniapp/`) :
 
-Livrable : rapport de faisabilité par compilateur, build GPU fonctionnel
-(sans noyau porté), baseline.
+1. Mini-application Fortran (forme fixe + cpp, comme FastS) : flux Roe o3
+   scatter (référence), flux gather OpenMP target, LU-SGS lexicographique
+   (référence), LU-SGS par hyperplans OpenMP target.
+2. Mini-application C++ / Kokkos : flux gather, flux de face stockés,
+   LU-SGS par hyperplans, mêmes données synthétiques.
+3. Script de comparaison des sommes de contrôle, scripts de build
+   (Kokkos openmp / cuda / hip) et d'exécution.
+4. Validation croisée sur CPU : toutes les formulations concordent à
+   mieux que 1e-13 (détails § 9).
+
+Reste à faire :
+
+5. Exécuter sur un nœud NVIDIA (nvfortran, Kokkos CUDA) et un nœud AMD
+   (amdflang ou Cray ftn, Kokkos HIP) ; remplir le tableau du README.
+6. Trancher gather vs flux de face, et confirmer la voie principale selon
+   le critère du § 4.4.
+7. Build : option `FAST_GPU` dans `setup.scons`, macro `E_GPU`, images
+   Docker NVIDIA et AMD, job CI qui compile `libfastgpu`.
+8. Baseline de performance CPU (1 nœud) sur `computePT.py`,
+   `PplaneNasaSAMesh136x96_t1`, `_t2`/`_t4` ; métrique : µs par cellule et
+   par sous-pas.
 
 ### Phase 1 — Explicite monozone sur GPU (5 à 6 semaines)
 
-1. Couche HPC : nouvelles macros `GPU_LOOP_*`, `SYNCHRO_*` no-op,
-   `LOOP_CACHE_*` à 1 bloc, `WORK_DISTRIBUTION` à 1 tâche par zone sous
-   `E_GPU`.
-2. Gabarits : réécriture de `template_FluxAndBalance_gpu.for` à partir du
-   gabarit CPU courant (options wiggle/senseur incluses), option `GPU` de
-   `generate_flu.py` branchée dans `srcs.py` ; régénération ROE/AUSM/SENSOR.
+1. Squelette `libfastgpu` : API C, mapping d'une zone, vues non gérées sur
+   les tableaux compactés, `update_host/device`, intégration dans
+   `gsdr3.cpp` sous `E_GPU`.
+2. Générateur : `generate_flu.py` émet des noyaux C++ (gabarit
+   `template_FluxAndBalance.cpp.in`) pour ROE/AUSM/SENSOR, 3dfull/3dhomo/
+   3dcart/2d, Euler/laminaire ; la mini-app sert de modèle.
 3. Noyaux manuels : `invist`, `cptst3` (réductions), `src_term`,
    `core3ark3`, `correct_flux`, `extract_res`, `mjr_ale_3dhomocart`.
 4. CL : farfield, wall inviscid/viscous (adia, isotherme), periodique,
    extrapolate, inflow/outflow/outpres ; `correct_coins`.
-5. Résidence des données au `warmup`, `_updateHost/_updateDevice`,
-   `exit data`.
-6. Validation : `computePT`, `PplaneNasaSAMesh136x96_t1`, cas Euler
-   cartésien 3D ; comparaison aux références `test.testT` avec tolérance.
+5. Couche HPC CPU : une tâche par zone et synchro no-op quand `E_GPU`.
+6. Validation : `computePT`, `PplaneNasaSAMesh136x96_t1`, cas Euler 3D ;
+   comparaison aux références `test.testT` avec tolérance.
 7. Mesure : accélération vs 1 nœud CPU sur NVIDIA et AMD ; profil
-   (`nsys`/`rocprof`) des 5 noyaux dominants.
-
-Livrable : explicite RK3 Euler/laminaire 2D/3D sur une zone, sur les deux
-constructeurs.
+   (`nsys` / `rocprof`) des noyaux dominants.
 
 ### Phase 2 — Multizone, RANS, transferts, MPI (5 à 6 semaines)
 
 1. `setInterpTransfersFast` sur GPU (raccords coïncidents, nearmatch,
    chimère stationnaire), tampons MPI par recopie host puis GPU-aware.
-2. SA : `vispalart`, termes sources SA, flux RANS (`fluFaceSA`, `fluvisq`
-   6 équations), `assemble_drodm_plus_SA`.
+2. SA : `vispalart`, termes sources SA, flux RANS 6 équations.
 3. LES : `lesvist`, `computePT_mut`.
 4. ALE : `mjr_ale`, vitesses d'entraînement, `core3as2_def`.
 5. CL restantes : wallmodel, inflow fichier/Lund/newton, injection/débit,
    wallexchange.
-6. IBC : transferts IBC et lois de paroi (`setIBCTransfersCommonVar2`).
+6. IBC : transferts IBC et lois de paroi.
 7. Validation : `cylindreChimerePT_t1..t4`, `FastIBMnoOverlap_t2..t4`, cas
    multiblocs MPI (2 et 4 GPU).
 
-Livrable : explicite multizone RANS/LES, multi-GPU.
-
 ### Phase 3 — Implicite (6 à 8 semaines)
 
-1. LU-SGS par hyperplans : `invlu_l`, `invlu_u`, variantes SA et ALE
-   (3dfull, 3dhomo, 3dcart, 2d) ; `lu_dinv`, `extrap_coe`.
-2. Résidu Newton (`core3as2*`, `residus_navier.h`), `lssiter_verif`,
-   affichage des critères temporels depuis le device.
-3. Relaxation SSOR (`NB_RELAX ≥ 2`) et solveur Krylov (`matvec`, GMRES,
-   préconditionneur) : le chemin Krylov est le repli si les hyperplans
-   déçoivent.
+1. LU-SGS par hyperplans : variantes 5/6 équations, ALE, 3dfull/3dhomo/
+   3dcart/2d, en templates C++ à partir de la mini-app.
+2. Résidu Newton (`core3as2*`, `residus_navier.h`), `lssiter_verif`.
+3. Relaxation SSOR et solveur Krylov (repli si les hyperplans déçoivent).
 4. SFD, extraction de résidus, `mjro_newton`.
-5. Validation : `PplaneNasaSAMesh136x96_t2..t7` (implicite SA),
-   `computeSteadyNaca*`.
-
-Livrable : implicite Newton/LU-SGS sur GPU.
+5. Validation : `PplaneNasaSAMesh136x96_t2..t7`, `computeSteadyNaca*`.
 
 ### Phase 4 — Optimisation, robustesse, CI (4 à 6 semaines, continu)
 
-1. Fusion de noyaux (viscosité + dt + src), découpage Euler/visqueux si
-   la pression de registres l'impose, réglage `collapse`/taille de teams
-   par constructeur.
-2. Recouvrement multi-zones (flux asynchrones), recouvrement MPI/calcul.
-3. Explicite local (`DTLOC`), statistiques (`STAT`), post-traitements
-   fréquents (`POST`) sur GPU si le profil le justifie.
+1. Fusion de noyaux, découpage Euler/visqueux si la pression de registres
+   l'impose, réglage des tailles de tuiles par constructeur.
+2. Instances d'exécution par zone (recouvrement multi-zones),
+   recouvrement MPI/calcul, regroupement de plans LU.
+3. Explicite local (`DTLOC`), statistiques, post-traitements fréquents.
 4. CI nocturne : compilation + tests `FastS/test` sur un nœud NVIDIA et un
    nœud AMD, suivi des performances.
-5. Documentation utilisateur (`docs/doc`) : installation GPU, API
+5. Documentation utilisateur : installation GPU, API
    `_updateHost/_updateDevice`, limitations.
 
 ### Hors périmètre initial
 
 Couche Python (`layer="python"`), chimère instationnaire `ucData`,
-`FastLBM` (en quarantaine), adjoint Tapenade (`ADJOINT`, `*_d.for`),
-`FastStrand`, wire model, raccord conservatif nearmatch, outils Pointwise.
+`FastLBM`, adjoint Tapenade, `FastStrand`, wire model, raccord conservatif
+nearmatch, remplacement du chemin CPU Fortran par les noyaux C++.
 
 ---
 
@@ -392,14 +402,12 @@ Couche Python (`layer="python"`), chimère instationnaire `ucData`,
 
 | Fichier | Action |
 |---|---|
-| `FastC/setup.scons`, `FastS/setup.scons` | options `FAST_GPU`, `-DE_GPU`, drapeaux et libs constructeur |
-| `FastC/FastC/HPC_LAYER/loopGpu_*.for`, nouveaux `GPU_*.for` | macros de boucles, réductions et no-op synchro |
+| `FastS/libfastgpu/` (nouveau) | CMake, API C, `zone.hpp`, noyaux générés et manuels, tests unitaires |
+| `FastS/setup.scons` | option `FAST_GPU`, `-DE_GPU`, lien `libfastgpu` |
+| `FastS/FastS/Compute/generate_flu.py` + gabarit C++ | émission des noyaux de flux C++ |
+| `FastS/FastS/Compute/{gsdr3,rhs,lhs,bcs}.cpp`, `navier_stokes_struct.for` | appels `libfastgpu` sous `E_GPU`, une tâche par zone, verrous et timers neutralisés |
 | `FastC/FastC/HPC_LAYER/WORK_DISTRIBUTION_BEGIN.for`, `LOOP_CACHE_*.for`, `SYNCHRO_*.for` | branchement `#ifdef E_GPU` |
-| `FastC/FastC/PyTree.py` (`_compact`, `warmup`), `FastC/FastC/Init/copy2gpu.cpp` → `gpu_data.cpp` | `enter data`, `update`, `exit data`, API Python |
-| `FastS/FastS/Compute/template_FluxAndBalance_gpu.for`, `generate_flu.py`, `srcs.py` | gabarit gather/face-flux, génération GPU |
-| `FastS/FastS/Compute/{invist,cptst3,src_term,core3ark3,correct_flux}.for` | boucles `GPU_LOOP_*`, réductions |
-| `FastS/FastS/Compute/{gsdr3,rhs,lhs,bcs}.cpp`, `navier_stokes_struct.for` | une tâche par zone, suppression verrous et timers sous `E_GPU` |
-| `FastS/FastS/BC/bvbs_*.for`, `BCzone.cpp` | boucles fenêtre sur GPU (modèle `bvbs_*_GPU_gpu.for`) |
+| `FastC/FastC/PyTree.py` (`_compact`, `warmup`), `FastS/FastS/PyTree.py` | `fastgpu_map_zone`, `_updateHost/_updateDevice` |
 | `FastS/test/*` | tolérances, variantes GPU des cas de non-régression |
 
 ---
@@ -407,9 +415,50 @@ Couche Python (`layer="python"`), chimère instationnaire `ucData`,
 ## 8. Décisions à prendre avant la phase 1
 
 1. Machines cibles prioritaires (NVIDIA A100/H100, AMD MI250X/MI300) et
-   accès à au moins un nœud de chaque pour la CI.
-2. Niveau de tolérance accepté entre résultats CPU et GPU dans les tests.
-3. Accord avec Cassiopee pour l'ajout d'une option GPU dans `KCore.Dist`
-   (sinon surcharge locale dans `setup.scons`).
-4. Formulation du bilan de flux (gather vs flux de face), après mesure en
-   phase 0.
+   accès à au moins un nœud de chaque pour la phase 0 puis la CI.
+2. Confirmation de la voie C++ / Kokkos après les mesures de phase 0
+   (critère § 4.4).
+3. Niveau de tolérance accepté entre résultats CPU et GPU dans les tests.
+4. Formulation du bilan de flux (gather vs flux de face), après mesure
+   sur GPU.
+
+---
+
+## 9. Résultats de la mini-application (phase 0, sans GPU)
+
+Conteneur x86 4 cœurs, gcc / gfortran 13.3, `-O3 -march=native`, zone
+64³, 5 répétitions ; temps en ns par cellule et par appel, bruit ~10 %.
+Les régions `target` Fortran sont exécutées sur le host : leurs temps ne
+préjugent de rien sur GPU.
+
+| Noyau | Fortran 1 thread | Kokkos OpenMP 1 thread | Kokkos OpenMP 4 threads |
+|---|---|---|---|
+| flux scatter FastS (référence) | 58 | — | — |
+| flux gather | 339 (target sur host) | 325 à 340 | 91 à 113 |
+| flux faces stockées + bilan | — | 148 à 188 | 50 à 68 |
+| LU-SGS lexicographique (référence) | 99 | — | — |
+| LU-SGS hyperplans | 410 (target sur host) | 485 à 620 | 126 à 171 |
+
+| Comparaison | écart relatif max |
+|---|---|
+| gather (Fortran target) vs scatter (Fortran) | 4.7e-14 |
+| hyperplans (Fortran target) vs lexicographique (Fortran) | 4.2e-16 |
+| faces (Kokkos) vs gather (Kokkos) | 2.3e-15 |
+| Fortran vs Kokkos, flux et LU-SGS | 9.2e-15 |
+
+Enseignements :
+
+1. Les tableaux à taille supposée `param_int(0:*)` de FastS ne peuvent
+   pas être mappés implicitement dans une région `target` : en plan B,
+   chaque noyau devrait recevoir des formes explicites ou des clauses
+   `map` dimensionnées (mécanique, mais à faire par le générateur).
+2. Les fonctions instruction (`inddm`, `indmtr`) et les macros du
+   préprocesseur passent avec gfortran dans une région `target` ; à
+   confirmer avec nvfortran et amdflang.
+3. Sur CPU le gather coûte 2× les flux de face stockés ; sur GPU le
+   rapport peut s'inverser.
+4. Les noyaux Kokkos écrits naïvement sont 2,5 à 6× plus lents sur CPU
+   que le Fortran FastS vectorisé par lignes : le chemin CPU Fortran est
+   conservé.
+5. Le LU-SGS par hyperplans produit 380 lancements par appel à 64³ : la
+   latence de lancement sera le facteur limitant sur petites zones.
